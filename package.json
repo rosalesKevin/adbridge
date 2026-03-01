@@ -31,7 +31,7 @@
       "signAndEditExecutable": false
     },
     "portable": {
-      "artifactName": "ADB-Multi-Tool.exe"
+      "artifactName": "ADBridge.exe"
     },
     "files": [
       "src/**/*"
