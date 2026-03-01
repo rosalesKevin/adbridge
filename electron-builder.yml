@@ -1,0 +1,16 @@
+appId: com.adbmultitool.app
+productName: ADB Multi Tool
+
+directories:
+  output: dist
+
+win:
+  target:
+    - target: portable
+      arch: [x64]
+
+portable:
+  artifactName: "ADB-Multi-Tool.exe"
+
+files:
+  - src/**/*

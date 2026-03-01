@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';">
+    <title>ADB Multi Tool</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header class="header-bar">
+        <h1 class="app-title">ADB Multi Tool</h1>
+        <div class="header-right">
+            <span id="statusDot" class="status-dot offline"></span>
+            <span id="statusLabel" class="status-text">Checking ADB...</span>
+            <button id="exitBtn" class="btn-exit" title="Exit application">✕</button>
+        </div>
+    </header>
+
+    <main class="main-content">
+
+        <!-- LEFT PANEL: Devices -->
+        <section class="panel device-panel">
+            <h2 class="section-header">Devices</h2>
+            <ul id="deviceList" class="item-list device-list">
+                <!-- Populated by renderer.js -->
+            </ul>
+            <button id="refreshDevicesBtn" class="btn btn-primary btn-full">
+                ↻  Refresh Devices
+            </button>
+            <div class="auto-refresh-row">
+                <select id="autoRefreshInterval" class="interval-select" title="Auto-refresh interval">
+                    <option value="5">5s</option>
+                    <option value="10">10s</option>
+                    <option value="30" selected>30s</option>
+                    <option value="60">1 min</option>
+                    <option value="120">2 min</option>
+                </select>
+                <button id="autoRefreshBtn" class="btn btn-auto">
+                    ↺  Auto Refresh
+                </button>
+            </div>
+        </section>
+
+        <!-- RIGHT PANEL: Apps -->
+        <section class="panel app-panel">
+
+            <div class="app-header-row">
+                <h2 class="section-header">Applications</h2>
+                <span id="appCount" class="app-count">0 / 0 apps</span>
+            </div>
+
+            <div class="search-row">
+                <input id="searchField" type="text" class="search-field"
+                       placeholder="🔍  Filter packages..." autocomplete="off">
+                <label class="checkbox-custom">
+                    <input id="showSystemApps" type="checkbox">
+                    <span>Include system apps</span>
+                </label>
+            </div>
+
+            <ul id="appList" class="item-list app-list">
+                <li class="empty-state">Select a device to view apps</li>
+            </ul>
+
+            <!-- App Actions Bar — shown when an app is selected -->
+            <div id="appActionsBar" class="app-actions-bar hidden">
+                <span id="selectedAppName" class="selected-app-name"></span>
+                <div class="app-action-buttons">
+                    <button id="clearDataBtn" class="btn btn-warning btn-small">⌫  Clear Data</button>
+                    <button id="uninstallBtn" class="btn btn-danger btn-small">✕  Uninstall</button>
+                </div>
+            </div>
+
+            <!-- Bottom: Install APK + Push File -->
+            <div class="section-divider"></div>
+            <div class="bottom-grid">
+
+                <div class="sub-section">
+                    <h3 class="sub-header">Install APK</h3>
+                    <div class="file-pick-row">
+                        <button id="browseBtn" class="btn btn-secondary btn-icon" title="Browse for APK file">📂</button>
+                        <span id="apkPathLabel" class="file-label">No file selected</span>
+                    </div>
+                    <button id="installBtn" class="btn btn-success btn-full" disabled>▶  Install</button>
+                </div>
+
+                <div class="sub-section">
+                    <h3 class="sub-header">Push File to Device</h3>
+                    <div class="file-pick-row">
+                        <button id="pushBrowseBtn" class="btn btn-secondary btn-icon" title="Browse for file to push">📂</button>
+                        <span id="pushFileLabel" class="file-label">No file selected</span>
+                    </div>
+                    <div class="push-dest-row">
+                        <input id="pushDestPath" type="text" class="dest-input"
+                               placeholder="/sdcard/Download/" value="/sdcard/Download/">
+                        <button id="pushBtn" class="btn btn-primary" disabled>▶  Push</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="log-panel">
+        <div class="log-header-row">
+            <h2 class="section-header">Log</h2>
+            <button id="clearLogBtn" class="btn btn-small btn-muted">Clear</button>
+        </div>
+        <div id="logOutput" class="log-area"></div>
+    </footer>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+{
+  "name": "adb-multi-tool",
+  "version": "1.0.0",
+  "description": "Android device management via ADB",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win portable",
+    "build:dir": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win dir"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "electron": "^28.3.0",
+    "electron-builder": "^24.13.0"
+  },
+  "build": {
+    "appId": "com.adbmultitool.app",
+    "productName": "ADB Multi Tool",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "ADB-Multi-Tool.exe"
+    },
+    "files": [
+      "src/**/*"
+    ]
+  }
+}
