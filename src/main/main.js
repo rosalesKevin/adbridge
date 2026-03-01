@@ -17,6 +17,7 @@ function createWindow() {
         minWidth: 750,
         minHeight: 550,
         title: 'ADBridge',
+        icon: path.join(__dirname, '..', '..', 'assets', 'icon.ico'),
         backgroundColor: '#1a1a2e',
         webPreferences: {
             preload: path.join(__dirname, '..', 'preload', 'preload.js'),

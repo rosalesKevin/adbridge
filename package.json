@@ -20,6 +20,7 @@
       "output": "dist"
     },
     "win": {
+      "icon": "assets/icon.ico",
       "target": [
         {
           "target": "portable",
@@ -34,7 +35,8 @@
       "artifactName": "ADBridge.exe"
     },
     "files": [
-      "src/**/*"
+      "src/**/*",
+      "assets/icon.ico"
     ]
   }
 }
