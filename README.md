@@ -1,4 +1,4 @@
-# ADB Multi Tool
+# ADBridge
 
 A simple desktop app for managing Android devices via ADB. Built with Electron.
 
@@ -42,7 +42,7 @@ npm start
 npm run build
 ```
 
-Output: `dist/ADB-Multi-Tool.exe` — no installation needed, just run it.
+Output: `dist/ADBridge.exe` — no installation needed, just run it.
 
 ---
 

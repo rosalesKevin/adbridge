@@ -192,6 +192,32 @@ async function installApk(deviceId, apkPath) {
 }
 
 /**
+ * Lists subdirectories at a given path on the device.
+ * Uses `ls -p` which appends `/` to directory names — we filter for those.
+ *
+ * @param {string} deviceId - Device serial number
+ * @param {string} remotePath - Absolute path on device (e.g., /sdcard/)
+ * @returns {Promise<string[]>} Sorted array of directory names (with trailing /)
+ */
+async function listDirectory(deviceId, remotePath) {
+    validateDeviceId(deviceId);
+
+    if (!remotePath || typeof remotePath !== 'string' || !remotePath.startsWith('/')) {
+        throw new Error('Remote path must start with /');
+    }
+
+    const { stdout } = await runAdb(['-s', deviceId, 'shell', 'ls', '-p', remotePath], 10000);
+
+    const dirs = stdout
+        .split('\n')
+        .map(l => l.trim())
+        .filter(l => l.endsWith('/') && l !== './' && l !== '../');
+
+    dirs.sort();
+    return dirs;
+}
+
+/**
  * Pushes a local file to a path on the device.
  * @param {string} deviceId - Device serial number
  * @param {string} localPath - Absolute path to file on the host machine
@@ -227,5 +253,6 @@ module.exports = {
     uninstallApp,
     clearAppData,
     installApk,
-    pushFile
+    pushFile,
+    listDirectory
 };

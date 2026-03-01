@@ -1,5 +1,5 @@
 /**
- * ADB Multi Tool — Renderer Process
+ * ADBridge — Renderer Process
  *
  * Runs in the renderer (browser) context — no Node.js access.
  * Communicates with main process via window.adb.* and window.dialogs.*
@@ -31,7 +31,14 @@ const installBtn       = document.getElementById('installBtn');
 const pushBrowseBtn    = document.getElementById('pushBrowseBtn');
 const pushFileLabel    = document.getElementById('pushFileLabel');
 const pushDestPath     = document.getElementById('pushDestPath');
+const browseFolderBtn  = document.getElementById('browseFolderBtn');
 const pushBtn          = document.getElementById('pushBtn');
+const folderModal      = document.getElementById('folderModal');
+const modalCurrentPath = document.getElementById('modalCurrentPath');
+const folderList       = document.getElementById('folderList');
+const modalCloseBtn    = document.getElementById('modalCloseBtn');
+const modalCancelBtn   = document.getElementById('modalCancelBtn');
+const modalSelectBtn   = document.getElementById('modalSelectBtn');
 const logOutput        = document.getElementById('logOutput');
 const clearLogBtn      = document.getElementById('clearLogBtn');
 
@@ -46,6 +53,7 @@ let selectedPushFile   = null;
 let allPackages        = [];
 let busy               = false;
 let autoRefreshTimerId = null;
+let modalPath          = '/sdcard/';
 
 // ─────────────────────────────────────────────
 // LOGGING
@@ -345,6 +353,83 @@ async function pushFileToDevice() {
 }
 
 // ─────────────────────────────────────────────
+// FOLDER BROWSER MODAL
+// ─────────────────────────────────────────────
+
+function openFolderBrowser() {
+    if (!selectedDeviceId) {
+        appendLog('ERROR: Select a device first.');
+        return;
+    }
+    // Start from the current dest input value if it looks valid, else /sdcard/
+    const current = pushDestPath.value.trim();
+    const startPath = current.startsWith('/') ? current : '/sdcard/';
+    folderModal.classList.remove('hidden');
+    navigateTo(startPath);
+}
+
+async function navigateTo(path) {
+    // Normalise: ensure trailing slash
+    modalPath = path.endsWith('/') ? path : path + '/';
+    modalCurrentPath.textContent = modalPath;
+    folderList.innerHTML = '<li class="state-msg">Loading...</li>';
+
+    const result = await window.adb.ls(selectedDeviceId, modalPath);
+
+    folderList.innerHTML = '';
+
+    // "Go up" row — show unless already at root
+    const parent = getParentPath(modalPath);
+    if (parent !== null) {
+        const li = document.createElement('li');
+        li.className = 'go-up';
+        li.innerHTML = '<span>↑</span><span>..</span>';
+        li.addEventListener('click', () => navigateTo(parent));
+        folderList.appendChild(li);
+    }
+
+    if (!result.success) {
+        const li = document.createElement('li');
+        li.className = 'state-msg';
+        li.textContent = 'Cannot read folder';
+        folderList.appendChild(li);
+        return;
+    }
+
+    if (result.data.length === 0) {
+        const li = document.createElement('li');
+        li.className = 'state-msg';
+        li.textContent = 'No subfolders';
+        folderList.appendChild(li);
+        return;
+    }
+
+    for (const dir of result.data) {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>📁</span><span>${escapeHtml(dir)}</span>`;
+        li.addEventListener('click', () => navigateTo(modalPath + dir));
+        folderList.appendChild(li);
+    }
+}
+
+function getParentPath(path) {
+    if (path === '/') return null;
+    const trimmed = path.endsWith('/') ? path.slice(0, -1) : path;
+    const lastSlash = trimmed.lastIndexOf('/');
+    return lastSlash === 0 ? '/' : trimmed.slice(0, lastSlash + 1);
+}
+
+function closeFolderBrowser() {
+    folderModal.classList.add('hidden');
+    folderList.innerHTML = '';
+}
+
+function selectFolder() {
+    pushDestPath.value = modalPath;
+    closeFolderBrowser();
+}
+
+// ─────────────────────────────────────────────
 // AUTO REFRESH
 // ─────────────────────────────────────────────
 
@@ -407,6 +492,14 @@ browseBtn.addEventListener('click', browseApk);
 installBtn.addEventListener('click', installApk);
 pushBrowseBtn.addEventListener('click', browsePushFile);
 pushBtn.addEventListener('click', pushFileToDevice);
+browseFolderBtn.addEventListener('click', openFolderBrowser);
+modalCloseBtn.addEventListener('click', closeFolderBrowser);
+modalCancelBtn.addEventListener('click', closeFolderBrowser);
+modalSelectBtn.addEventListener('click', selectFolder);
+// Close when clicking the backdrop
+folderModal.addEventListener('click', (e) => {
+    if (e.target === folderModal) closeFolderBrowser();
+});
 clearLogBtn.addEventListener('click', () => { logOutput.textContent = ''; });
 
 // ─────────────────────────────────────────────
@@ -414,7 +507,7 @@ clearLogBtn.addEventListener('click', () => { logOutput.textContent = ''; });
 // ─────────────────────────────────────────────
 
 (async function init() {
-    appendLog('ADB Multi Tool starting...');
+    appendLog('ADBridge starting...');
     await checkAdbStatus();
     await refreshDevices();
 })();

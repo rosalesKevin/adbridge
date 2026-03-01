@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
           content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';">
-    <title>ADB Multi Tool</title>
+    <title>ADBridge</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
     <header class="header-bar">
-        <h1 class="app-title">ADB Multi Tool</h1>
+        <h1 class="app-title">ADBridge</h1>
         <div class="header-right">
             <span id="statusDot" class="status-dot offline"></span>
             <span id="statusLabel" class="status-text">Checking ADB...</span>
@@ -96,6 +96,7 @@
                     <div class="push-dest-row">
                         <input id="pushDestPath" type="text" class="dest-input"
                                placeholder="/sdcard/Download/" value="/sdcard/Download/">
+                        <button id="browseFolderBtn" class="btn btn-secondary btn-icon" title="Browse device folders">📁</button>
                         <button id="pushBtn" class="btn btn-primary" disabled>▶  Push</button>
                     </div>
                 </div>
@@ -112,6 +113,28 @@
         </div>
         <div id="logOutput" class="log-area"></div>
     </footer>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- FOLDER BROWSER MODAL                        -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div id="folderModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">Browse Device Folders</span>
+                <button id="modalCloseBtn" class="btn-exit" title="Close">✕</button>
+            </div>
+            <div id="modalCurrentPath" class="modal-path">/sdcard/</div>
+            <div class="modal-body">
+                <ul id="folderList" class="folder-list">
+                    <!-- Populated by renderer.js -->
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button id="modalCancelBtn" class="btn btn-muted">Cancel</button>
+                <button id="modalSelectBtn" class="btn btn-primary">Select This Folder</button>
+            </div>
+        </div>
+    </div>
 
     <script src="renderer.js"></script>
 </body>

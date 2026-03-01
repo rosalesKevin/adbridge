@@ -97,6 +97,16 @@ function registerIpcHandlers() {
         }
     });
 
+    // ── List Device Directory ──
+    ipcMain.handle('adb:ls', async (_event, deviceId, remotePath) => {
+        try {
+            const dirs = await adbService.listDirectory(deviceId, remotePath);
+            return { success: true, data: dirs };
+        } catch (err) {
+            return { success: false, error: err.message };
+        }
+    });
+
     // ── Push File to Device ──
     ipcMain.handle('adb:push', async (_event, deviceId, localPath, remotePath) => {
         try {

@@ -16,7 +16,7 @@ function createWindow() {
         height: 720,
         minWidth: 750,
         minHeight: 550,
-        title: 'ADB Multi Tool',
+        title: 'ADBridge',
         backgroundColor: '#1a1a2e',
         webPreferences: {
             preload: path.join(__dirname, '..', 'preload', 'preload.js'),

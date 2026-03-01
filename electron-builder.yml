@@ -1,5 +1,5 @@
-appId: com.adbmultitool.app
-productName: ADB Multi Tool
+appId: com.adbridge.app
+productName: ADBridge
 
 directories:
   output: dist
@@ -10,7 +10,7 @@ win:
       arch: [x64]
 
 portable:
-  artifactName: "ADB-Multi-Tool.exe"
+  artifactName: "ADBridge.exe"
 
 files:
   - src/**/*

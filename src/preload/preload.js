@@ -32,6 +32,9 @@ contextBridge.exposeInMainWorld('adb', {
 
     /** Push a local file to the device → { success, data: string } */
     push: (deviceId, localPath, remotePath) => ipcRenderer.invoke('adb:push', deviceId, localPath, remotePath),
+
+    /** List subdirectories on the device → { success, data: string[] } */
+    ls: (deviceId, remotePath) => ipcRenderer.invoke('adb:ls', deviceId, remotePath),
 });
 
 contextBridge.exposeInMainWorld('dialogs', {

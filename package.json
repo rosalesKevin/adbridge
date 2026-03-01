@@ -1,5 +1,5 @@
 {
-  "name": "adb-multi-tool",
+  "name": "adbridge",
   "version": "1.0.0",
   "description": "Android device management via ADB",
   "main": "src/main/main.js",
@@ -14,8 +14,8 @@
     "electron-builder": "^24.13.0"
   },
   "build": {
-    "appId": "com.adbmultitool.app",
-    "productName": "ADB Multi Tool",
+    "appId": "com.adbridge.app",
+    "productName": "ADBridge",
     "directories": {
       "output": "dist"
     },
