@@ -1,21 +1,21 @@
 # ADBridge v1.1.0
 
-ADBridge is the swiss knife of ADB: a desktop UI that simplifies day-to-day ADB usage without removing power.
+ADBridge is the swiss knife of ADB: a desktop UI that simplifies day-to-day ADB usage..
 
 It is built for developers, testers, and anyone already familiar with ADB who wants faster workflows without living in a terminal.
+
+<p align="center"><img width="521" height="380" alt="ADBridge Preview" src="https://github.com/user-attachments/assets/35f63722-3755-49cf-9bb8-3388334c126f" /></p>
 
 ## Features
 
 - Device discovery with real-time connect/disconnect tracking
-- USB and wireless ADB workflows (`? Wireless` setup and `? Disconnect`)
-- Device connection labels (`[USB]` / `[Wi-Fi]`)
+- USB and wireless ADB workflows
 - Device info bar (model, Android version, battery, RAM)
 - App management (list packages, uninstall, clear data)
 - APK installation from local files
 - Device file explorer (browse, push, pull)
 - Logcat viewer with app selector, tag filter, level filter, and export
 - Screen mirroring via bundled scrcpy
-- In-app custom confirmation dialogs for uninstall and wireless ADB actions
 
 ## Requirements
 
