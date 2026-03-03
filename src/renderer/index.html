@@ -12,96 +12,147 @@
 
     <header class="header-bar">
         <h1 class="app-title">ADBridge</h1>
+        <div class="header-center">
+            <button id="refreshDevicesBtn" class="btn btn-icon btn-small" title="Refresh devices">↻</button>
+            <select id="deviceSelect" class="device-select">
+                <option value="">No devices</option>
+            </select>
+            <button id="wirelessBtn" class="btn btn-small btn-secondary" disabled title="Set up wireless ADB">⊛ Wireless</button>
+            <button id="mirrorBtn" class="btn btn-small btn-secondary" disabled>Mirror</button>
+        </div>
         <div class="header-right">
             <span id="statusDot" class="status-dot offline"></span>
             <span id="statusLabel" class="status-text">Checking ADB...</span>
-            <button id="exitBtn" class="btn-exit" title="Exit application">✕</button>
         </div>
     </header>
 
+    <div id="deviceInfoBar" class="device-info-bar hidden"></div>
+
     <main class="main-content">
 
-        <!-- LEFT PANEL: Devices -->
-        <section class="panel device-panel">
-            <h2 class="section-header">Devices</h2>
-            <ul id="deviceList" class="item-list device-list">
-                <!-- Populated by renderer.js -->
-            </ul>
-            <button id="refreshDevicesBtn" class="btn btn-primary btn-full">
-                ↻  Refresh Devices
-            </button>
-            <div class="auto-refresh-row">
-                <select id="autoRefreshInterval" class="interval-select" title="Auto-refresh interval">
-                    <option value="5">5s</option>
-                    <option value="10">10s</option>
-                    <option value="30" selected>30s</option>
-                    <option value="60">1 min</option>
-                    <option value="120">2 min</option>
-                </select>
-                <button id="autoRefreshBtn" class="btn btn-auto">
-                    ↺  Auto Refresh
-                </button>
-            </div>
-        </section>
-
-        <!-- RIGHT PANEL: Apps -->
+        <!-- FULL-WIDTH PANEL: Tabbed -->
         <section class="panel app-panel">
 
-            <div class="app-header-row">
-                <h2 class="section-header">Applications</h2>
-                <span id="appCount" class="app-count">0 / 0 apps</span>
+            <!-- Tab navigation -->
+            <div class="tab-bar">
+                <button id="tabBtnApps" class="tab-btn active">Applications</button>
+                <button id="tabBtnExplorer" class="tab-btn">Device Explorer</button>
+                <button id="tabBtnLogcat" class="tab-btn">Logcat</button>
             </div>
 
-            <div class="search-row">
-                <input id="searchField" type="text" class="search-field"
-                       placeholder="🔍  Filter packages..." autocomplete="off">
-                <label class="checkbox-custom">
-                    <input id="showSystemApps" type="checkbox">
-                    <span>Include system apps</span>
-                </label>
-            </div>
+            <!-- ══ APPLICATIONS TAB ══ -->
+            <div id="tabApps" class="tab-pane active">
 
-            <ul id="appList" class="item-list app-list">
-                <li class="empty-state">Select a device to view apps</li>
-            </ul>
-
-            <!-- App Actions Bar — shown when an app is selected -->
-            <div id="appActionsBar" class="app-actions-bar hidden">
-                <span id="selectedAppName" class="selected-app-name"></span>
-                <div class="app-action-buttons">
-                    <button id="clearDataBtn" class="btn btn-warning btn-small">⌫  Clear Data</button>
-                    <button id="uninstallBtn" class="btn btn-danger btn-small">✕  Uninstall</button>
-                </div>
-            </div>
-
-            <!-- Bottom: Install APK + Push File -->
-            <div class="section-divider"></div>
-            <div class="bottom-grid">
-
-                <div class="sub-section">
-                    <h3 class="sub-header">Install APK</h3>
-                    <div class="file-pick-row">
-                        <button id="browseBtn" class="btn btn-secondary btn-icon" title="Browse for APK file">📂</button>
-                        <span id="apkPathLabel" class="file-label">No file selected</span>
-                    </div>
-                    <button id="installBtn" class="btn btn-success btn-full" disabled>▶  Install</button>
+                <div class="app-header-row">
+                    <h2 class="section-header">Applications</h2>
+                    <span id="appCount" class="app-count">0 / 0 apps</span>
                 </div>
 
-                <div class="sub-section">
-                    <h3 class="sub-header">Push File to Device</h3>
-                    <div class="file-pick-row">
-                        <button id="pushBrowseBtn" class="btn btn-secondary btn-icon" title="Browse for file to push">📂</button>
-                        <span id="pushFileLabel" class="file-label">No file selected</span>
+                <div class="search-row">
+                    <input id="searchField" type="text" class="search-field"
+                           placeholder="🔍  Filter packages..." autocomplete="off">
+                    <label class="checkbox-custom">
+                        <input id="showSystemApps" type="checkbox">
+                        <span>Include system apps</span>
+                    </label>
+                </div>
+
+                <ul id="appList" class="item-list app-list">
+                    <li class="empty-state">Select a device to view apps</li>
+                </ul>
+
+                <div class="section-divider"></div>
+
+                <div class="bottom-actions">
+                    <div class="install-section">
+                        <div class="file-pick-row">
+                            <button id="browseBtn" class="btn btn-secondary btn-icon btn-small" title="Browse for APK file">📂</button>
+                            <span id="apkPathLabel" class="file-label">No file selected</span>
+                        </div>
+                        <button id="installBtn" class="btn btn-success btn-small btn-full" disabled>▶  Install APK</button>
                     </div>
-                    <div class="push-dest-row">
-                        <input id="pushDestPath" type="text" class="dest-input"
-                               placeholder="/sdcard/Download/" value="/sdcard/Download/">
-                        <button id="browseFolderBtn" class="btn btn-secondary btn-icon" title="Browse device folders">📁</button>
-                        <button id="pushBtn" class="btn btn-primary" disabled>▶  Push</button>
+                    <div class="actions-separator"></div>
+                    <div class="app-actions-section">
+                        <div class="selected-app-row">
+                            <span id="selectedAppName" class="selected-app-label">No app selected</span>
+                            <button id="deselectAppBtn" class="btn-deselect hidden" title="Deselect app">×</button>
+                        </div>
+                        <div class="app-action-row">
+                            <button id="clearDataBtn" class="btn btn-warning btn-small" disabled>⌫  Clear Data</button>
+                            <button id="uninstallBtn" class="btn btn-danger btn-small" disabled>✕  Uninstall</button>
+                        </div>
                     </div>
                 </div>
 
             </div>
+
+            <!-- ══ DEVICE EXPLORER TAB ══ -->
+            <div id="tabExplorer" class="tab-pane">
+
+                <!-- Toolbar: breadcrumb + path input -->
+                <div class="explorer-toolbar">
+                    <div id="explorerBreadcrumb" class="explorer-breadcrumb">
+                        <!-- Populated by renderer.js -->
+                    </div>
+                    <div class="explorer-path-row">
+                        <button id="explorerUpBtn" class="btn btn-secondary btn-icon btn-small" title="Go up one level">↑</button>
+                        <input id="explorerPathInput" type="text" class="dest-input explorer-path-input"
+                               placeholder="/sdcard/" value="/sdcard/" spellcheck="false">
+                        <button id="explorerGoBtn" class="btn btn-secondary btn-small">Go</button>
+                        <button id="explorerRefreshBtn" class="btn btn-secondary btn-icon btn-small" title="Refresh">↻</button>
+                    </div>
+                </div>
+
+                <!-- File / folder list -->
+                <ul id="explorerList" class="item-list explorer-list">
+                    <li class="empty-state">Select a device to browse files</li>
+                </ul>
+
+                <!-- Action bar -->
+                <div class="explorer-action-bar">
+                    <span id="explorerStatus" class="explorer-status">—</span>
+                    <div class="explorer-actions">
+                        <button id="explorerPushBtn" class="btn btn-secondary btn-small"
+                                title="Upload a file from PC to the current folder">↑  Push File Here</button>
+                        <button id="explorerPullBtn" class="btn btn-primary btn-small" disabled
+                                title="Download selected file to PC">↓  Pull</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ══ LOGCAT TAB ══ -->
+            <div id="tabLogcat" class="tab-pane">
+
+                <div class="logcat-toolbar">
+                    <div class="logcat-toolbar-row">
+                        <select id="logcatAppSelect" class="logcat-app-select">
+                            <option value="">Select app...</option>
+                        </select>
+                        <select id="logcatLevelSelect" class="logcat-level-select" title="Minimum log level">
+                            <option value="" selected>All</option>
+                            <option value="V">Verbose</option>
+                            <option value="D">Debug</option>
+                            <option value="I">Info</option>
+                            <option value="W">Warning</option>
+                            <option value="E">Error</option>
+                            <option value="F">Fatal</option>
+                        </select>
+                        <button id="logcatStartBtn" class="btn btn-success btn-small">▶  Start</button>
+                        <button id="logcatClearBtn" class="btn btn-secondary btn-small">⌫  Clear</button>
+                        <button id="logcatExportBtn" class="btn btn-secondary btn-small">↓  Export</button>
+                    </div>
+                    <div class="logcat-toolbar-row">
+                        <input id="logcatTagInput" type="text" class="logcat-tag-input"
+                               placeholder="Tags (optional, comma-separated — e.g. ActivityMain, NetworkUtils)"
+                               autocomplete="off" spellcheck="false">
+                    </div>
+                </div>
+
+                <div id="logcatOutput" class="logcat-area"></div>
+
+            </div>
+
         </section>
 
     </main>
@@ -114,28 +165,17 @@
         <div id="logOutput" class="log-area"></div>
     </footer>
 
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- FOLDER BROWSER MODAL                        -->
-    <!-- ═══════════════════════════════════════════ -->
-    <div id="folderModal" class="modal-overlay hidden">
-        <div class="modal">
-            <div class="modal-header">
-                <span class="modal-title">Browse Device Folders</span>
-                <button id="modalCloseBtn" class="btn-exit" title="Close">✕</button>
-            </div>
-            <div id="modalCurrentPath" class="modal-path">/sdcard/</div>
-            <div class="modal-body">
-                <ul id="folderList" class="folder-list">
-                    <!-- Populated by renderer.js -->
-                </ul>
-            </div>
-            <div class="modal-footer">
-                <button id="modalCancelBtn" class="btn btn-muted">Cancel</button>
-                <button id="modalSelectBtn" class="btn btn-primary">Select This Folder</button>
+    <div id="confirmOverlay" class="confirm-overlay" aria-hidden="true">
+        <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+            <h3 id="confirmTitle" class="confirm-title">Confirm action</h3>
+            <p id="confirmMessage" class="confirm-message"></p>
+            <div class="confirm-actions">
+                <button id="confirmCancelBtn" class="btn btn-secondary btn-small">Cancel</button>
+                <button id="confirmOkBtn" class="btn btn-danger btn-small">Confirm</button>
             </div>
         </div>
     </div>
 
-    <script src="renderer.js"></script>
+    <script type="module" src="renderer.js"></script>
 </body>
 </html>

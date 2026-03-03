@@ -17,6 +17,11 @@ contextBridge.exposeInMainWorld('adb', {
 
     /** List connected devices → { success, data: [{id, status}] } */
     devices: () => ipcRenderer.invoke('adb:devices'),
+    onDevicesChanged: (callback) => {
+        const handler = (_event, devices) => callback(devices);
+        ipcRenderer.on('adb:devices-changed', handler);
+        return () => ipcRenderer.removeListener('adb:devices-changed', handler);
+    },
 
     /** List packages on a device → { success, data: string[] } */
     packages: (deviceId, userOnly) => ipcRenderer.invoke('adb:packages', deviceId, userOnly),
@@ -33,8 +38,53 @@ contextBridge.exposeInMainWorld('adb', {
     /** Push a local file to the device → { success, data: string } */
     push: (deviceId, localPath, remotePath) => ipcRenderer.invoke('adb:push', deviceId, localPath, remotePath),
 
-    /** List subdirectories on the device → { success, data: string[] } */
+    /** Pull a file from the device to the host → { success, data: string } */
+    pull: (deviceId, remotePath, localPath) => ipcRenderer.invoke('adb:pull', deviceId, remotePath, localPath),
+
+    /** List entries on the device → { success, data: Array<{name, isDir}> } */
     ls: (deviceId, remotePath) => ipcRenderer.invoke('adb:ls', deviceId, remotePath),
+
+    /** Get device info (model, Android version, battery, memory) → { success, data: {...} } */
+    deviceInfo: (deviceId) => ipcRenderer.invoke('adb:device-info', deviceId),
+
+    /** Get device Wi-Fi IP address → { success, data: string|null } */
+    getDeviceIp: (deviceId) => ipcRenderer.invoke('adb:get-ip', deviceId),
+
+    /** Switch device to TCP/IP and connect wirelessly → { success, data: {tcpip, connect} } */
+    wirelessSetup: (deviceId, ip) => ipcRenderer.invoke('adb:wireless-setup', deviceId, ip),
+
+    /** Disconnect a wireless ADB device → { success, data: string } */
+    wirelessDisconnect: (deviceId) => ipcRenderer.invoke('adb:wireless-disconnect', deviceId),
+});
+
+contextBridge.exposeInMainWorld('scrcpy', {
+    start: (deviceId) => ipcRenderer.invoke('scrcpy:start', deviceId),
+    stop: (deviceId) => ipcRenderer.invoke('scrcpy:stop', deviceId),
+    status: (deviceId) => ipcRenderer.invoke('scrcpy:status', deviceId),
+    onStatusChange: (callback) => {
+        const handler = (_event, payload) => callback(payload);
+        ipcRenderer.on('scrcpy:status', handler);
+        return () => ipcRenderer.removeListener('scrcpy:status', handler);
+    }
+});
+
+contextBridge.exposeInMainWorld('logcat', {
+    start: (deviceId, packageName, tag, level) =>
+        ipcRenderer.invoke('logcat:start', deviceId, packageName, tag, level),
+
+    stop: (deviceId) => ipcRenderer.invoke('logcat:stop', deviceId),
+
+    status: (deviceId) => ipcRenderer.invoke('logcat:status', deviceId),
+
+    /** Subscribe to incoming logcat lines. Returns an unsubscribe function. */
+    onData: (callback) => {
+        const handler = (_event, line) => callback(line);
+        ipcRenderer.on('logcat:data', handler);
+        return () => ipcRenderer.removeListener('logcat:data', handler);
+    },
+
+    saveFile: (content, defaultName) =>
+        ipcRenderer.invoke('logcat:save', content, defaultName),
 });
 
 contextBridge.exposeInMainWorld('dialogs', {
@@ -46,4 +96,7 @@ contextBridge.exposeInMainWorld('dialogs', {
 
     /** Open native file picker for any file → { success, data: string|null } */
     pickFile: () => ipcRenderer.invoke('dialog:open-file'),
+
+    /** Open native directory picker → { success, data: string|null } */
+    pickDirectory: () => ipcRenderer.invoke('dialog:open-directory'),
 });

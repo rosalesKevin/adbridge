@@ -1,0 +1,106 @@
+/* Forms and controls */
+.auto-refresh-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.interval-select {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  width: 68px;
+  flex-shrink: 0;
+  outline: none;
+}
+
+.interval-select:focus {
+  border-color: var(--accent);
+}
+
+.search-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-field {
+  flex: 1;
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 7px 12px;
+  font-size: 12.5px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-field::placeholder {
+  color: var(--text-muted);
+}
+
+.search-field:focus {
+  border-color: var(--accent);
+}
+
+.checkbox-custom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.checkbox-custom input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+}
+
+.file-pick-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.file-label {
+  flex: 1;
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 2px;
+}
+
+.dest-input {
+  flex: 1;
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 0;
+}
+
+.dest-input::placeholder {
+  color: var(--text-muted);
+}
+
+.dest-input:focus {
+  border-color: var(--accent);
+}

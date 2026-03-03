@@ -1,6 +1,6 @@
 {
   "name": "adbridge",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Android device management via ADB",
   "main": "src/main/main.js",
   "scripts": {
@@ -37,6 +37,13 @@
     "files": [
       "src/**/*",
       "assets/icon.ico"
+    ],
+    "extraResources": [
+      {
+        "from": "vendor/scrcpy",
+        "to": "scrcpy",
+        "filter": ["**/*"]
+      }
     ]
   }
 }

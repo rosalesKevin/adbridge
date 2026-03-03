@@ -1,0 +1,132 @@
+/* Explorer */
+.explorer-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.explorer-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  min-height: 22px;
+  padding: 2px 0;
+}
+
+.breadcrumb-item {
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 11.5px;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.12s;
+  white-space: nowrap;
+}
+
+.breadcrumb-item:hover {
+  background-color: rgba(77, 159, 255, 0.12);
+}
+
+.breadcrumb-item.breadcrumb-current {
+  color: var(--text-primary);
+  cursor: default;
+  font-weight: 600;
+}
+
+.breadcrumb-item.breadcrumb-current:hover {
+  background-color: transparent;
+}
+
+.breadcrumb-sep {
+  color: var(--text-muted);
+  font-size: 12px;
+  user-select: none;
+  padding: 0 1px;
+}
+
+.explorer-path-row {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.explorer-path-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.explorer-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.explorer-icon {
+  font-size: 11px;
+  flex-shrink: 0;
+  width: 28px;
+  text-align: center;
+  line-height: 1;
+}
+
+.explorer-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+}
+
+.explorer-size {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  text-align: right;
+  min-width: 54px;
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+}
+
+.explorer-file {
+  color: var(--text-secondary);
+}
+
+.explorer-file:hover {
+  color: var(--text-primary) !important;
+}
+
+.explorer-file.selected {
+  background-color: var(--bg-selected) !important;
+  border-left: 3px solid var(--accent);
+  padding-left: 9px;
+  color: var(--text-primary) !important;
+}
+
+.explorer-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+
+.explorer-status {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.explorer-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}

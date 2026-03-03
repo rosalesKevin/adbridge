@@ -1,0 +1,178 @@
+/* Lists */
+.item-list {
+  list-style: none;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.item-list li {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.12s;
+}
+
+.item-list li:last-child {
+  border-bottom: none;
+}
+
+.item-list li:hover {
+  background-color: var(--bg-hover);
+}
+
+.item-list li.selected {
+  background-color: var(--bg-selected);
+  border-left: 3px solid var(--accent);
+  padding-left: 9px;
+}
+
+.item-list li.empty-state {
+  color: var(--text-muted);
+  justify-content: center;
+  cursor: default;
+  padding: 28px 12px;
+  font-style: italic;
+  font-size: 12px;
+}
+
+.item-list li.empty-state:hover {
+  background-color: transparent;
+}
+
+.device-id {
+  flex: 1;
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.device-status {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+
+.device-status.status-device {
+  background-color: rgba(52, 208, 104, 0.12);
+  color: #34d068;
+}
+
+.device-status.status-unauthorized {
+  background-color: rgba(224, 140, 26, 0.12);
+  color: #e08c1a;
+}
+
+.device-status.status-offline {
+  background-color: rgba(232, 69, 69, 0.12);
+  color: #e84545;
+}
+
+.package-name {
+  flex: 1;
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bottom-actions {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  gap: 0;
+}
+
+.install-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.actions-separator {
+  width: 1px;
+  background: var(--border);
+  margin: 0 12px;
+  flex-shrink: 0;
+}
+
+.app-actions-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.selected-app-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.selected-app-label {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: italic;
+  flex: 1;
+  min-width: 0;
+}
+
+.selected-app-label.has-selection {
+  color: var(--accent);
+  font-style: normal;
+}
+
+.btn-deselect {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 15px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  border-radius: 50%;
+  line-height: 1;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.btn-deselect:hover {
+  background-color: var(--bg-hover);
+  color: var(--danger);
+}
+
+.btn-deselect.hidden {
+  display: none;
+}
+
+.app-action-row {
+  display: flex;
+  gap: 6px;
+}
+
+.app-action-row .btn {
+  flex: 1;
+}

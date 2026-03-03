@@ -1,6 +1,9 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, globalShortcut } = require('electron');
 const path = require('node:path');
 const { registerIpcHandlers } = require('./ipc-handlers');
+const adbService = require('./adb-service');
+const scrcpyService = require('./scrcpy-service');
+const logcatService = require('./logcat-service');
 
 /**
  * Creates the main application window.
@@ -38,6 +41,25 @@ function createWindow() {
 app.whenReady().then(() => {
     registerIpcHandlers();
     createWindow();
+    adbService.startDeviceTracking({
+        onDevicesChanged: (devices) => {
+            for (const win of BrowserWindow.getAllWindows()) {
+                win.webContents.send('adb:devices-changed', devices);
+            }
+        }
+    });
+
+    // Dev-mode shortcuts — only active when running from source (not packaged)
+    if (!app.isPackaged) {
+        globalShortcut.register('F5', () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) win.webContents.reload();
+        });
+        globalShortcut.register('F12', () => {
+            const win = BrowserWindow.getFocusedWindow();
+            if (win) win.webContents.toggleDevTools();
+        });
+    }
 
     app.on('activate', () => {
         // macOS: re-create window when dock icon is clicked and no windows exist
@@ -45,6 +67,16 @@ app.whenReady().then(() => {
             createWindow();
         }
     });
+});
+
+app.on('before-quit', () => {
+    adbService.stopDeviceTracking();
+    scrcpyService.stopAllMirrors();
+    logcatService.stopAllLogcat();
+});
+
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
 });
 
 // Quit when all windows are closed (except on macOS)

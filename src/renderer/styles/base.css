@@ -1,0 +1,63 @@
+/* Base and theme variables */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-dark: #0e1014;
+  --bg-panel: #171b24;
+  --bg-input: #10131b;
+  --bg-hover: #1d2233;
+  --bg-selected: #132040;
+  --border: #242c3d;
+  --border-light: #1a2130;
+  --text-primary: #dde5f2;
+  --text-secondary: #7888a8;
+  --text-muted: #3d4d68;
+  --accent: #4d9fff;
+  --danger: #e84545;
+  --danger-hover: #f05858;
+  --warning: #e08c1a;
+  --warning-hover: #f0a030;
+  --success: #22a855;
+  --success-hover: #2ecc66;
+  --primary: #2a6ce8;
+  --primary-hover: #4480f5;
+  --radius: 6px;
+  --radius-sm: 4px;
+}
+
+body {
+  font-family: 'Segoe UI', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  color: var(--text-primary);
+  background-color: var(--bg-dark);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a3450;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a4870;
+}
+
+::selection {
+  background-color: rgba(77, 159, 255, 0.25);
+}

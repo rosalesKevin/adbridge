@@ -1,0 +1,63 @@
+const fs = require('node:fs');
+const { runAdb } = require('./runner');
+const { validateDeviceId, validatePackageName } = require('./validation');
+
+async function getPackages(deviceId, userOnly = true) {
+  validateDeviceId(deviceId);
+
+  const args = ['-s', deviceId, 'shell', 'pm', 'list', 'packages'];
+  if (userOnly) args.push('-3');
+
+  const { stdout } = await runAdb(args);
+  const packages = [];
+
+  for (const line of stdout.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('package:')) {
+      packages.push(trimmed.substring('package:'.length).trim());
+    }
+  }
+
+  packages.sort();
+  return packages;
+}
+
+async function uninstallApp(deviceId, packageName) {
+  validateDeviceId(deviceId);
+  validatePackageName(packageName);
+
+  const { stdout, stderr } = await runAdb(['-s', deviceId, 'uninstall', packageName], 60000);
+  return stdout || stderr || 'No output from ADB';
+}
+
+async function clearAppData(deviceId, packageName) {
+  validateDeviceId(deviceId);
+  validatePackageName(packageName);
+
+  const { stdout, stderr } = await runAdb(['-s', deviceId, 'shell', 'pm', 'clear', packageName]);
+  return stdout || stderr || 'No output from ADB';
+}
+
+async function installApk(deviceId, apkPath) {
+  validateDeviceId(deviceId);
+
+  if (!apkPath || typeof apkPath !== 'string') {
+    throw new Error('APK path cannot be empty');
+  }
+  if (!fs.existsSync(apkPath)) {
+    throw new Error(`APK file does not exist: ${apkPath}`);
+  }
+  if (!apkPath.toLowerCase().endsWith('.apk')) {
+    throw new Error(`File is not an APK: ${apkPath}`);
+  }
+
+  const { stdout, stderr } = await runAdb(['-s', deviceId, 'install', '-r', apkPath], 120000);
+  return stdout || stderr || 'No output from ADB';
+}
+
+module.exports = {
+  getPackages,
+  uninstallApp,
+  clearAppData,
+  installApk
+};
