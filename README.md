@@ -20,7 +20,6 @@ It is built for developers, testers, and anyone already familiar with ADB who wa
 ## Requirements
 
 - [Node.js](https://nodejs.org) (v18+)
-- [ADB](https://developer.android.com/tools/adb) in system `PATH`
 - USB debugging enabled on Android devices
 
 ## Run
@@ -47,3 +46,5 @@ Output: `dist/ADBridge.exe` (portable, no installer).
 ## Third-party licenses
 
 ADBridge bundles [scrcpy](https://github.com/Genymobile/scrcpy) (Apache 2.0).
+
+ADBridge bundles [Android Platform Tools](https://developer.android.com/tools/releases/platform-tools) (ADB) by Google, subject to the [Android Software Development Kit License Agreement](https://developer.android.com/studio/terms).

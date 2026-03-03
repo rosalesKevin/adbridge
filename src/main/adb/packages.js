@@ -38,6 +38,7 @@ async function clearAppData(deviceId, packageName) {
   return stdout || stderr || 'No output from ADB';
 }
 
+
 async function installApk(deviceId, apkPath) {
   validateDeviceId(deviceId);
 

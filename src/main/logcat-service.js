@@ -4,6 +4,7 @@ const { spawn } = require('node:child_process');
 const readline = require('node:readline');
 const { validateDeviceId, validatePackageName } = require('./adb/validation');
 const { runAdb } = require('./adb/runner');
+const { getAdbExe } = require('./adb/resolver');
 
 const TAG_PATTERN = /^[a-zA-Z0-9._\-]+$/;
 
@@ -75,7 +76,7 @@ async function startLogcat(deviceId, packageName, tags, level, onLine) {
   }
   // If no tags and level is "All"/"Verbose", no extra filter — show everything for this PID
 
-  const proc = spawn('adb', args, {
+  const proc = spawn(getAdbExe(), args, {
     stdio: ['ignore', 'pipe', 'ignore']
   });
 

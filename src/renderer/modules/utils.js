@@ -1,3 +1,21 @@
+const toastContainer = document.getElementById('toastContainer');
+
+export function showToast(message, type = 'info', durationMs = 3000) {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = message;
+  toastContainer.appendChild(el);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => el.classList.add('toast-show'));
+  });
+
+  setTimeout(() => {
+    el.classList.add('toast-hide');
+    el.addEventListener('transitionend', () => el.remove(), { once: true });
+  }, durationMs);
+}
+
 export function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;

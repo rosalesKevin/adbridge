@@ -9,7 +9,8 @@ async function listDirectory(deviceId, remotePath) {
     throw new Error('Remote path must start with /');
   }
 
-  const { stdout } = await runAdb(['-s', deviceId, 'shell', 'ls', '-la', remotePath], 15000);
+  const escapedPath = remotePath.replace(/'/g, "'\\''");
+  const { stdout } = await runAdb(['-s', deviceId, 'shell', `ls -la '${escapedPath}'`], 15000);
   const entries = [];
 
   for (const line of stdout.split('\n')) {

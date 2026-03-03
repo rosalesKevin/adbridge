@@ -1,7 +1,7 @@
 import { dom } from './dom.js';
 import { state } from './state.js';
 import { appendLog } from './logger.js';
-import { escapeHtml } from './utils.js';
+import { escapeHtml, showToast } from './utils.js';
 import { setBusy, updateAppCount } from './ui-state.js';
 import { showConfirmDialog } from './confirm-dialog.js';
 
@@ -96,13 +96,16 @@ async function uninstallApp() {
 
   if (result.success) {
     appendLog(`Uninstall result: ${result.data}`);
+    showToast('App uninstalled', 'success');
     state.selectedPackage = null;
     updateAppActions();
     await loadPackages();
   } else {
     appendLog(`Uninstall FAILED: ${result.error}`);
+    showToast(`Uninstall failed: ${result.error}`, 'error');
   }
 }
+
 
 async function clearAppData() {
   if (!state.selectedDeviceId || !state.selectedPackage || state.busy) return;
@@ -112,7 +115,13 @@ async function clearAppData() {
   const result = await window.adb.clear(state.selectedDeviceId, state.selectedPackage);
   setBusy(false);
 
-  appendLog(result.success ? `Clear data result: ${result.data}` : `Clear data FAILED: ${result.error}`);
+  if (result.success) {
+    appendLog(`Clear data result: ${result.data}`);
+    showToast('App data cleared', 'success');
+  } else {
+    appendLog(`Clear data FAILED: ${result.error}`);
+    showToast(`Clear data failed: ${result.error}`, 'error');
+  }
 }
 
 async function browseApk() {
@@ -143,9 +152,11 @@ async function installApk() {
 
   if (result.success) {
     appendLog(`Install result: ${result.data}`);
+    showToast('APK installed', 'success');
     await loadPackages();
   } else {
     appendLog(`Install FAILED: ${result.error}`);
+    showToast(`Install failed: ${result.error}`, 'error');
   }
 }
 

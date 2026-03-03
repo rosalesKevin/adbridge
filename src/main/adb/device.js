@@ -1,5 +1,6 @@
 const { spawn } = require('node:child_process');
 const { runAdb } = require('./runner');
+const { getAdbExe } = require('./resolver');
 const { validateDeviceId } = require('./validation');
 
 const TRACKER_RESTART_DELAY_MS = 2000;
@@ -105,7 +106,7 @@ function startDeviceTracking({ onDevicesChanged, onStatus } = {}) {
   trackerBuffer = '';
 
   try {
-    trackerProcess = spawn('adb', ['track-devices'], {
+    trackerProcess = spawn(getAdbExe(), ['track-devices'], {
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true
     });

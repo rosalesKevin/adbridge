@@ -1,5 +1,6 @@
 /* Log */
 .log-area {
+  user-select: text;
   background-color: #090c12;
   border: 1px solid var(--border);
   border-radius: var(--radius);
