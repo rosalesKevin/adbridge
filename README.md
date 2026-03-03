@@ -30,6 +30,12 @@ npm install
 npm start
 ```
 
+## Download Portable EXE
+
+If you just want to use ADBridge, download the latest portable `ADBridge.exe` from the GitHub Releases page:
+
+https://github.com/rosalesKevin/adbridge/releases
+
 ## Build Portable EXE
 
 ```bash
