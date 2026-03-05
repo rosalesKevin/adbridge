@@ -97,7 +97,8 @@
   color: var(--text-primary) !important;
 }
 
-.explorer-file.selected {
+.explorer-file.selected,
+.explorer-dir.selected {
   background-color: var(--bg-selected) !important;
   border-left: 3px solid var(--accent);
   padding-left: 9px;
@@ -129,4 +130,26 @@
   display: flex;
   gap: 6px;
   flex-shrink: 0;
+}
+
+.explorer-transfer-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+}
+
+.explorer-transfer-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--text-muted);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: explorer-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes explorer-spin {
+  to { transform: rotate(360deg); }
 }

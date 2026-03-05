@@ -14,12 +14,13 @@ export function clearExplorer() {
   dom.explorerStatus.textContent = '-';
   dom.explorerPullBtn.disabled = true;
   dom.explorerPushBtn.disabled = true;
+  dom.explorerPushFolderBtn.disabled = true;
 }
 
 function explorerUpdateStatus() {
   const total = state.explorerEntries.length;
   if (state.explorerSelected) {
-    const sizeStr = state.explorerSelected.size !== null ? `  ·  ${formatSize(state.explorerSelected.size)}` : '';
+    const sizeStr = state.explorerSelected.size !== null ? `  ï¿½  ${formatSize(state.explorerSelected.size)}` : '';
     dom.explorerStatus.textContent = `Selected: ${state.explorerSelected.name}${sizeStr}`;
   } else {
     dom.explorerStatus.textContent = total === 0 ? 'Empty folder' : `${total} item${total !== 1 ? 's' : ''}`;
@@ -103,7 +104,8 @@ function explorerRenderEntries() {
     `;
 
     if (entry.isDir) {
-      li.addEventListener('click', () => {
+      li.addEventListener('click', () => explorerSelectEntry(entry, li));
+      li.addEventListener('dblclick', () => {
         void explorerNavigate(`${state.explorerPath}${entry.name}/`);
       });
     } else {
@@ -157,6 +159,7 @@ async function explorerPush() {
   if (!picked.success || !picked.data) return;
 
   appendLog(`Pushing ${picked.data} -> ${state.selectedDeviceId}:${state.explorerPath}...`);
+  dom.explorerStatus.innerHTML = '<span class="explorer-transfer-status"><span class="explorer-transfer-spinner"></span>Uploading...</span>';
   setBusy(true);
 
   const result = await window.adb.push(state.selectedDeviceId, picked.data, state.explorerPath);
@@ -167,6 +170,32 @@ async function explorerPush() {
     await explorerNavigate(state.explorerPath);
   } else {
     appendLog(`Push FAILED: ${result.error}`);
+    explorerUpdateStatus();
+  }
+}
+
+async function explorerPushFolder() {
+  if (!state.selectedDeviceId) {
+    appendLog('ERROR: No device selected.');
+    return;
+  }
+
+  const picked = await window.dialogs.pickSourceDirectory();
+  if (!picked.success || !picked.data) return;
+
+  appendLog(`Pushing folder ${picked.data} -> ${state.selectedDeviceId}:${state.explorerPath}...`);
+  dom.explorerStatus.innerHTML = '<span class="explorer-transfer-status"><span class="explorer-transfer-spinner"></span>Uploading folder...</span>';
+  setBusy(true);
+
+  const result = await window.adb.push(state.selectedDeviceId, picked.data, state.explorerPath);
+  setBusy(false);
+
+  if (result.success) {
+    appendLog(`Push folder result: ${result.data}`);
+    await explorerNavigate(state.explorerPath);
+  } else {
+    appendLog(`Push folder FAILED: ${result.error}`);
+    explorerUpdateStatus();
   }
 }
 
@@ -175,8 +204,8 @@ async function explorerPull() {
     appendLog('ERROR: No device selected.');
     return;
   }
-  if (!state.explorerSelected || state.explorerSelected.isDir) {
-    appendLog('ERROR: Select a file first.');
+  if (!state.explorerSelected) {
+    appendLog('ERROR: Select a file or folder first.');
     return;
   }
 
@@ -185,10 +214,12 @@ async function explorerPull() {
   if (!picked.success || !picked.data) return;
 
   appendLog(`Pulling ${state.selectedDeviceId}:${remotePath} -> ${picked.data}...`);
+  dom.explorerStatus.innerHTML = '<span class="explorer-transfer-status"><span class="explorer-transfer-spinner"></span>Downloading...</span>';
   setBusy(true);
 
   const result = await window.adb.pull(state.selectedDeviceId, remotePath, picked.data);
   setBusy(false);
+  explorerUpdateStatus();
 
   appendLog(result.success ? `Pull result: ${result.data}` : `Pull FAILED: ${result.error}`);
 }
@@ -233,6 +264,9 @@ export function initExplorer() {
   });
   dom.explorerPushBtn.addEventListener('click', () => {
     void explorerPush();
+  });
+  dom.explorerPushFolderBtn.addEventListener('click', () => {
+    void explorerPushFolder();
   });
   dom.explorerPullBtn.addEventListener('click', () => {
     void explorerPull();

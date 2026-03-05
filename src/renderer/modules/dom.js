@@ -31,6 +31,7 @@ export const dom = {
   explorerList: document.getElementById('explorerList'),
   explorerStatus: document.getElementById('explorerStatus'),
   explorerPushBtn: document.getElementById('explorerPushBtn'),
+  explorerPushFolderBtn: document.getElementById('explorerPushFolderBtn'),
   explorerPullBtn: document.getElementById('explorerPullBtn'),
   logcatAppSelect: document.getElementById('logcatAppSelect'),
   logcatTagInput: document.getElementById('logcatTagInput'),

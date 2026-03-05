@@ -97,6 +97,9 @@ contextBridge.exposeInMainWorld('dialogs', {
     /** Open native file picker for any file → { success, data: string|null } */
     pickFile: () => ipcRenderer.invoke('dialog:open-file'),
 
+    /** Open native directory picker for push source → { success, data: string|null } */
+    pickSourceDirectory: () => ipcRenderer.invoke('dialog:open-push-directory'),
+
     /** Open native directory picker → { success, data: string|null } */
     pickDirectory: () => ipcRenderer.invoke('dialog:open-directory'),
 });

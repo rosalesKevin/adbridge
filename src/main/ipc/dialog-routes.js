@@ -40,6 +40,23 @@ function registerDialogHandlers(ipcMain, dialog) {
     }
   });
 
+  ipcMain.handle('dialog:open-push-directory', async () => {
+    try {
+      const result = await dialog.showOpenDialog({
+        title: 'Select Folder to Push',
+        properties: ['openDirectory']
+      });
+
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: true, data: null };
+      }
+
+      return { success: true, data: result.filePaths[0] };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
   ipcMain.handle('dialog:open-directory', async () => {
     try {
       const result = await dialog.showOpenDialog({

@@ -9,7 +9,8 @@ export function setBusy(isBusy) {
   dom.uninstallBtn.disabled = isBusy || !state.selectedPackage;
   dom.clearDataBtn.disabled = isBusy || !state.selectedPackage;
   dom.explorerPushBtn.disabled = isBusy || !state.selectedDeviceId;
-  dom.explorerPullBtn.disabled = isBusy || !state.explorerSelected || state.explorerSelected.isDir;
+  dom.explorerPushFolderBtn.disabled = isBusy || !state.selectedDeviceId;
+  dom.explorerPullBtn.disabled = isBusy || !state.explorerSelected;
   dom.explorerUpBtn.disabled = isBusy;
   dom.explorerRefreshBtn.disabled = isBusy;
   dom.explorerGoBtn.disabled = isBusy;

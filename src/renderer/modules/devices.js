@@ -210,9 +210,9 @@ export async function refreshDevices({ silent = false, onNoDevices, onDeviceSele
 
   if (!currentDevices) {
     if (!silent) appendLog('Refreshing device list...');
-    setBusy(true);
+    if (!silent) setBusy(true);
     const result = await window.adb.devices();
-    setBusy(false);
+    if (!silent) setBusy(false);
 
     if (!result.success) {
       appendLog(`ERROR: ${result.error}`);
