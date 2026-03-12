@@ -70,6 +70,11 @@
                             <span id="apkPathLabel" class="file-label">No file selected</span>
                         </div>
                         <button id="installBtn" class="btn btn-success btn-small btn-full" disabled>▶  Install APK</button>
+                        <button id="apkAdvancedToggle" class="btn-advanced-toggle">▸ Advanced</button>
+                        <div id="apkAdvancedPanel" class="apk-advanced-panel">
+                            <button id="apkSigningInfoBtn" class="btn btn-secondary btn-small btn-full" disabled title="Show signing certificate info for the selected APK">🔏  APK Signing Info</button>
+                            <button id="inspectKeystoreBtn" class="btn btn-secondary btn-small btn-full" title="Inspect a keystore file">🔑  Inspect Keystore</button>
+                        </div>
                     </div>
                     <div class="actions-separator"></div>
                     <div class="app-actions-section">
@@ -89,17 +94,46 @@
             <!-- ══ DEVICE EXPLORER TAB ══ -->
             <div id="tabExplorer" class="tab-pane">
 
-                <!-- Toolbar: breadcrumb + path input -->
+                <!-- Toolbar: breadcrumb + navigation + actions -->
                 <div class="explorer-toolbar">
                     <div id="explorerBreadcrumb" class="explorer-breadcrumb">
                         <!-- Populated by renderer.js -->
                     </div>
-                    <div class="explorer-path-row">
+                    
+                    <div class="explorer-nav-row">
                         <button id="explorerUpBtn" class="btn btn-secondary btn-icon btn-small" title="Go up one level">↑</button>
-                        <input id="explorerPathInput" type="text" class="dest-input explorer-path-input"
-                               placeholder="/sdcard/" value="/sdcard/" spellcheck="false">
+                        <div class="explorer-path-container">
+                            <input id="explorerPathInput" type="text" class="dest-input explorer-path-input"
+                                   placeholder="/sdcard/" value="/sdcard/" spellcheck="false">
+                        </div>
                         <button id="explorerGoBtn" class="btn btn-secondary btn-small">Go</button>
                         <button id="explorerRefreshBtn" class="btn btn-secondary btn-icon btn-small" title="Refresh">↻</button>
+                    </div>
+
+                    <div class="explorer-action-row">
+                        <div class="action-group">
+                            <button id="explorerNewFolderBtn" class="btn btn-secondary btn-small" title="Create new folder">
+                                <span>+ New Folder</span>
+                            </button>
+                            <button id="explorerPushBtn" class="btn btn-secondary btn-small" title="Upload file">
+                                <span>↑ Push File</span>
+                            </button>
+                            <button id="explorerPushFolderBtn" class="btn btn-secondary btn-small" title="Upload folder">
+                                <span>📁 Push Folder</span>
+                            </button>
+                        </div>
+                        <div class="action-group-separator"></div>
+                        <div class="action-group">
+                            <button id="explorerPullBtn" class="btn btn-primary btn-small" disabled title="Download selected">
+                                <span>↓ Pull</span>
+                            </button>
+                            <button id="explorerRenameBtn" class="btn btn-secondary btn-small" disabled title="Rename selected">
+                                <span>✎ Rename</span>
+                            </button>
+                            <button id="explorerDeleteBtn" class="btn btn-danger btn-small" disabled title="Delete selected">
+                                <span>✕ Delete</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -108,17 +142,9 @@
                     <li class="empty-state">Select a device to browse files</li>
                 </ul>
 
-                <!-- Action bar -->
-                <div class="explorer-action-bar">
+                <!-- Status bar -->
+                <div class="explorer-status-bar">
                     <span id="explorerStatus" class="explorer-status">—</span>
-                    <div class="explorer-actions">
-                        <button id="explorerPushBtn" class="btn btn-secondary btn-small"
-                                title="Upload a file from PC to the current folder">↑  Push File</button>
-                        <button id="explorerPushFolderBtn" class="btn btn-secondary btn-small"
-                                title="Upload a folder from PC to the current folder">📁  Push Folder</button>
-                        <button id="explorerPullBtn" class="btn btn-primary btn-small" disabled
-                                title="Download selected file or folder to PC">↓  Pull</button>
-                    </div>
                 </div>
 
             </div>
@@ -131,6 +157,7 @@
                         <select id="logcatAppSelect" class="logcat-app-select">
                             <option value="">Select app...</option>
                         </select>
+                        <button id="logcatFromApkBtn" class="btn btn-secondary btn-small" title="Pick a release APK and auto-fill the app dropdown">📦 From APK</button>
                         <select id="logcatLevelSelect" class="logcat-level-select" title="Minimum log level">
                             <option value="" selected>All</option>
                             <option value="V">Verbose</option>
@@ -159,6 +186,8 @@
 
     </main>
 
+    <div id="logResizeHandle" class="log-resize-handle"></div>
+
     <footer class="log-panel">
         <div class="log-header-row">
             <h2 class="section-header">Log</h2>
@@ -171,6 +200,7 @@
         <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
             <h3 id="confirmTitle" class="confirm-title">Confirm action</h3>
             <p id="confirmMessage" class="confirm-message"></p>
+            <input id="confirmInput" type="text" class="confirm-input" autocomplete="off" spellcheck="false">
             <div class="confirm-actions">
                 <button id="confirmCancelBtn" class="btn btn-secondary btn-small">Cancel</button>
                 <button id="confirmOkBtn" class="btn btn-danger btn-small">Confirm</button>

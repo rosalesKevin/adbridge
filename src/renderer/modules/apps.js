@@ -3,7 +3,7 @@ import { state } from './state.js';
 import { appendLog } from './logger.js';
 import { escapeHtml, showToast } from './utils.js';
 import { setBusy, updateAppCount } from './ui-state.js';
-import { showConfirmDialog } from './confirm-dialog.js';
+import { showConfirmDialog, showPromptDialog } from './confirm-dialog.js';
 
 function selectPackage(pkg) {
   state.selectedPackage = state.selectedPackage === pkg ? null : pkg;
@@ -132,6 +132,7 @@ async function browseApk() {
   dom.apkPathLabel.textContent = result.data.split(/[\\/]/).pop();
   dom.apkPathLabel.title = result.data;
   dom.installBtn.disabled = false;
+  dom.apkSigningInfoBtn.disabled = false;
   appendLog(`Selected APK: ${result.data}`);
 }
 
@@ -160,6 +161,55 @@ async function installApk() {
   }
 }
 
+async function showApkSigningInfo() {
+  if (!state.selectedApkPath) return;
+
+  appendLog(`Reading signing info for: ${state.selectedApkPath}`);
+  setBusy(true);
+  const result = await window.keystore.apkSigning(state.selectedApkPath);
+  setBusy(false);
+
+  if (result.success) {
+    appendLog('── APK Signing Info ──────────────────');
+    for (const line of result.data.split('\n')) {
+      appendLog(line);
+    }
+    appendLog('──────────────────────────────────────');
+  } else {
+    appendLog(`APK Signing Info FAILED: ${result.error}`);
+  }
+}
+
+async function inspectKeystore() {
+  const picked = await window.dialogs.pickKeystore();
+  if (!picked.success || !picked.data) return;
+
+  const password = await showPromptDialog({
+    title: 'Keystore Password',
+    message: `Keystore: ${picked.data.split(/[\\/]/).pop()}`,
+    placeholder: 'Enter store password',
+    inputType: 'password',
+    confirmText: 'Inspect'
+  });
+
+  if (password === null) return;
+
+  appendLog(`Inspecting keystore: ${picked.data}`);
+  setBusy(true);
+  const result = await window.keystore.inspect(picked.data, password);
+  setBusy(false);
+
+  if (result.success) {
+    appendLog('── Keystore Info ─────────────────────');
+    for (const line of result.data.split('\n')) {
+      appendLog(line);
+    }
+    appendLog('──────────────────────────────────────');
+  } else {
+    appendLog(`Keystore Inspect FAILED: ${result.error}`);
+  }
+}
+
 export function initApps() {
   dom.searchField.addEventListener('input', renderAppList);
   dom.showSystemApps.addEventListener('change', () => {
@@ -181,5 +231,15 @@ export function initApps() {
   });
   dom.installBtn.addEventListener('click', () => {
     void installApk();
+  });
+  dom.apkAdvancedToggle.addEventListener('click', () => {
+    const open = dom.apkAdvancedPanel.classList.toggle('open');
+    dom.apkAdvancedToggle.textContent = open ? '▾ Advanced' : '▸ Advanced';
+  });
+  dom.apkSigningInfoBtn.addEventListener('click', () => {
+    void showApkSigningInfo();
+  });
+  dom.inspectKeystoreBtn.addEventListener('click', () => {
+    void inspectKeystore();
   });
 }

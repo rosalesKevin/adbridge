@@ -104,3 +104,28 @@
 .dest-input:focus {
   border-color: var(--accent);
 }
+
+.btn-advanced-toggle {
+  background: none;
+  border: none;
+  padding: 2px 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.15s;
+}
+
+.btn-advanced-toggle:hover {
+  color: var(--text-secondary);
+}
+
+.apk-advanced-panel {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.apk-advanced-panel.open {
+  display: flex;
+}

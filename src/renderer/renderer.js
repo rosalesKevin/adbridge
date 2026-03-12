@@ -12,6 +12,7 @@ import { initDevices, checkAdbStatus, refreshDevices } from './modules/devices.j
 import { initTabs } from './modules/tabs.js';
 import { initLogcat, refreshLogcatAppList, stopLogcatIfRunning, clearLogcat } from './modules/logcat.js';
 import { loadDeviceInfo, clearDeviceInfo } from './modules/device-info.js';
+import { initResize } from './modules/resize.js';
 
 async function onDeviceSelected(device) {
   void stopLogcatIfRunning();
@@ -43,6 +44,7 @@ function onLogcatTabShown() {
 
 function initEvents() {
   initLogger();
+  initResize();
   initTabs({ onExplorerTabShown, onLogcatTabShown });
   initApps();
   initExplorer();

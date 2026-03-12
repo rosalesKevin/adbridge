@@ -5,7 +5,7 @@ function formatBytes(bytes) {
   return gb >= 1 ? `${gb.toFixed(1)} GB` : `${(bytes / (1024 ** 2)).toFixed(0)} MB`;
 }
 
-function buildInfoBar(data) {
+function buildInfoBar(data, ip) {
   const { model, manufacturer, androidVersion, batteryLevel, batteryCharging, memUsedBytes, memTotalBytes } = data;
 
   const parts = [];
@@ -23,6 +23,8 @@ function buildInfoBar(data) {
   if (memUsedBytes !== null && memTotalBytes !== null) {
     parts.push(`RAM ${formatBytes(memUsedBytes)} / ${formatBytes(memTotalBytes)}`);
   }
+
+  if (ip) parts.push(`IP ${ip}`);
 
   dom.deviceInfoBar.innerHTML = '';
   for (let i = 0; i < parts.length; i++) {
@@ -44,13 +46,18 @@ export async function loadDeviceInfo(deviceId) {
   dom.deviceInfoBar.classList.remove('hidden');
   dom.deviceInfoBar.innerHTML = '<span class="info-chip" style="color:var(--text-muted)">Loading device info...</span>';
 
-  const result = await window.adb.deviceInfo(deviceId);
-  if (!result.success) {
+  const [infoResult, ipResult] = await Promise.all([
+    window.adb.deviceInfo(deviceId),
+    window.adb.getDeviceIp(deviceId)
+  ]);
+
+  if (!infoResult.success) {
     dom.deviceInfoBar.classList.add('hidden');
     return;
   }
 
-  buildInfoBar(result.data);
+  const ip = ipResult.success ? ipResult.data : null;
+  buildInfoBar(infoResult.data, ip);
 }
 
 export function clearDeviceInfo() {

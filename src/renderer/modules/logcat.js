@@ -5,6 +5,7 @@ import { appendLog } from './logger.js';
 const MAX_LINES = 10000;
 
 let unsubscribeData = null;
+let unsubscribeError = null;
 
 // ── App Dropdown ──
 
@@ -96,6 +97,7 @@ async function startLogcat() {
   appendLog(`Logcat: starting for ${packageName} [level=${levelText}${tagDisplay}]`);
 
   unsubscribeData = window.logcat.onData((line) => appendLine(line));
+  unsubscribeError = window.logcat.onError((line) => appendLog(`[ADB] ${line}`));
 
   const result = await window.logcat.start(deviceId, packageName, tags, level);
 
@@ -110,6 +112,7 @@ async function startLogcat() {
 
 async function stopLogcat(silent = false) {
   if (unsubscribeData) { unsubscribeData(); unsubscribeData = null; }
+  if (unsubscribeError) { unsubscribeError(); unsubscribeError = null; }
 
   const deviceId = state.selectedDeviceId;
   if (!deviceId) { setRunning(false); return; }
@@ -169,6 +172,32 @@ export function initLogcat() {
   // Restart stream when level or tags change while running
   dom.logcatLevelSelect.addEventListener('change', () => void restartLogcat());
   dom.logcatTagInput.addEventListener('change', () => void restartLogcat());
+
+  dom.logcatFromApkBtn.addEventListener('click', async () => {
+    const picked = await window.dialogs.pickApk();
+    if (!picked.success || !picked.data) return;
+
+    appendLog(`Extracting package name from: ${picked.data.split(/[\\/]/).pop()}...`);
+    const result = await window.keystore.apkPackageName(picked.data);
+
+    if (!result.success) {
+      appendLog(`Could not read package name: ${result.error}`);
+      return;
+    }
+
+    const packageName = result.data;
+    appendLog(`Package name: ${packageName}`);
+
+    // Add to dropdown if not already present, then select it
+    let opt = Array.from(dom.logcatAppSelect.options).find((o) => o.value === packageName);
+    if (!opt) {
+      opt = document.createElement('option');
+      opt.value = packageName;
+      opt.textContent = packageName;
+      dom.logcatAppSelect.appendChild(opt);
+    }
+    dom.logcatAppSelect.value = packageName;
+  });
 
   dom.logcatExportBtn.addEventListener('click', async () => {
     if (state.logcatLines.length === 0) {

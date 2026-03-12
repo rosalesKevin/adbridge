@@ -3,6 +3,8 @@ import { state } from './state.js';
 import { appendLog } from './logger.js';
 import { escapeHtml, formatSize } from './utils.js';
 import { setBusy } from './ui-state.js';
+import { showConfirmDialog, showPromptDialog } from './confirm-dialog.js';
+import { getIcon } from './icons.js';
 
 export function clearExplorer() {
   state.explorerPath = '/sdcard/';
@@ -13,14 +15,14 @@ export function clearExplorer() {
   dom.explorerPathInput.value = '/sdcard/';
   dom.explorerStatus.textContent = '-';
   dom.explorerPullBtn.disabled = true;
-  dom.explorerPushBtn.disabled = true;
-  dom.explorerPushFolderBtn.disabled = true;
+  dom.explorerRenameBtn.disabled = true;
+  dom.explorerDeleteBtn.disabled = true;
 }
 
 function explorerUpdateStatus() {
   const total = state.explorerEntries.length;
   if (state.explorerSelected) {
-    const sizeStr = state.explorerSelected.size !== null ? `  �  ${formatSize(state.explorerSelected.size)}` : '';
+    const sizeStr = state.explorerSelected.size !== null ? `  •  ${formatSize(state.explorerSelected.size)}` : '';
     dom.explorerStatus.textContent = `Selected: ${state.explorerSelected.name}${sizeStr}`;
   } else {
     dom.explorerStatus.textContent = total === 0 ? 'Empty folder' : `${total} item${total !== 1 ? 's' : ''}`;
@@ -39,6 +41,8 @@ function explorerSelectEntry(entry, li) {
   }
 
   dom.explorerPullBtn.disabled = state.busy || !state.explorerSelected;
+  dom.explorerRenameBtn.disabled = state.busy || !state.explorerSelected;
+  dom.explorerDeleteBtn.disabled = state.busy || !state.explorerSelected;
   explorerUpdateStatus();
 }
 
@@ -58,7 +62,7 @@ function explorerRenderBreadcrumb(path) {
     if (index > 0) {
       const sep = document.createElement('span');
       sep.className = 'breadcrumb-sep';
-      sep.textContent = '>'; 
+      sep.innerHTML = getIcon('chevronRight');
       dom.explorerBreadcrumb.appendChild(sep);
     }
 
@@ -82,6 +86,8 @@ function explorerRenderEntries() {
   dom.explorerList.innerHTML = '';
   state.explorerSelected = null;
   dom.explorerPullBtn.disabled = true;
+  dom.explorerRenameBtn.disabled = true;
+  dom.explorerDeleteBtn.disabled = true;
 
   if (state.explorerEntries.length === 0) {
     dom.explorerList.innerHTML = '<li class="state-msg">Empty folder</li>';
@@ -97,19 +103,20 @@ function explorerRenderEntries() {
       ? `<span class="explorer-size">${formatSize(entry.size)}</span>`
       : '<span class="explorer-size"></span>';
 
+    const icon = entry.isDir ? getIcon('folder') : getIcon('file');
+
     li.innerHTML = `
-      <span class="explorer-icon">${entry.isDir ? '[D]' : '[F]'}</span>
+      <span class="explorer-icon">${icon}</span>
       <span class="explorer-name" title="${escapeHtml(entry.name)}">${escapeHtml(entry.name)}</span>
       ${sizeHtml}
     `;
 
+    li.addEventListener('click', () => explorerSelectEntry(entry, li));
+    
     if (entry.isDir) {
-      li.addEventListener('click', () => explorerSelectEntry(entry, li));
       li.addEventListener('dblclick', () => {
         void explorerNavigate(`${state.explorerPath}${entry.name}/`);
       });
-    } else {
-      li.addEventListener('click', () => explorerSelectEntry(entry, li));
     }
 
     dom.explorerList.appendChild(li);
@@ -199,6 +206,121 @@ async function explorerPushFolder() {
   }
 }
 
+async function explorerCreateFolder() {
+  if (!state.selectedDeviceId) {
+    appendLog('ERROR: No device selected.');
+    return;
+  }
+
+  const name = await showPromptDialog({
+    title: 'New Folder',
+    message: `Creating folder in: ${state.explorerPath}`,
+    placeholder: 'Folder name',
+    confirmText: 'Create'
+  });
+
+  if (!name) return;
+
+  if (name.includes('/') || name.includes('\0')) {
+    appendLog('ERROR: Folder name cannot contain / or null characters.');
+    return;
+  }
+
+  const remotePath = `${state.explorerPath}${name}`;
+  appendLog(`Creating folder ${state.selectedDeviceId}:${remotePath}...`);
+  setBusy(true);
+
+  const result = await window.adb.mkdir(state.selectedDeviceId, remotePath);
+  setBusy(false);
+
+  if (result.success) {
+    appendLog(`Folder created: ${remotePath}`);
+    await explorerNavigate(state.explorerPath);
+  } else {
+    appendLog(`Create folder FAILED: ${result.error}`);
+    explorerUpdateStatus();
+  }
+}
+
+async function explorerDeleteSelected() {
+  if (!state.selectedDeviceId) {
+    appendLog('ERROR: No device selected.');
+    return;
+  }
+  if (!state.explorerSelected) {
+    appendLog('ERROR: Select a file or folder first.');
+    return;
+  }
+
+  const entry = state.explorerSelected;
+  const remotePath = `${state.explorerPath}${entry.name}`;
+  const kind = entry.isDir ? 'folder' : 'file';
+
+  const confirmed = await showConfirmDialog({
+    title: `Delete ${kind}`,
+    message: `Permanently delete "${entry.name}" from the device?\n\nThis cannot be undone.`,
+    confirmText: 'Delete',
+    confirmStyle: 'danger'
+  });
+
+  if (!confirmed) return;
+
+  appendLog(`Deleting ${state.selectedDeviceId}:${remotePath}...`);
+  setBusy(true);
+
+  const result = await window.adb.rm(state.selectedDeviceId, remotePath);
+  setBusy(false);
+
+  if (result.success) {
+    appendLog(`Deleted: ${remotePath}`);
+    await explorerNavigate(state.explorerPath);
+  } else {
+    appendLog(`Delete FAILED: ${result.error}`);
+    explorerUpdateStatus();
+  }
+}
+
+async function explorerRenameSelected() {
+  if (!state.selectedDeviceId) {
+    appendLog('ERROR: No device selected.');
+    return;
+  }
+  if (!state.explorerSelected) {
+    appendLog('ERROR: Select a file or folder first.');
+    return;
+  }
+
+  const entry = state.explorerSelected;
+  const newName = await showPromptDialog({
+    title: 'Rename',
+    message: `Renaming: ${entry.name}`,
+    placeholder: entry.name,
+    confirmText: 'Rename'
+  });
+
+  if (!newName || newName === entry.name) return;
+
+  if (newName.includes('/') || newName.includes('\0')) {
+    appendLog('ERROR: Name cannot contain / or null characters.');
+    return;
+  }
+
+  const remotePath = `${state.explorerPath}${entry.name}`;
+  appendLog(`Renaming ${state.selectedDeviceId}:${remotePath} -> ${newName}...`);
+  setBusy(true);
+
+  const result = await window.adb.rename(state.selectedDeviceId, remotePath, newName);
+  setBusy(false);
+
+  if (result.success) {
+    appendLog(`Renamed to: ${newName}`);
+    await explorerNavigate(state.explorerPath);
+  } else {
+    appendLog(`Rename FAILED: ${result.error}`);
+    explorerUpdateStatus();
+  }
+}
+
 async function explorerPull() {
   if (!state.selectedDeviceId) {
     appendLog('ERROR: No device selected.');
@@ -237,6 +359,16 @@ export function handleDeviceSelectedForExplorer() {
 }
 
 export function initExplorer() {
+  // Populate icons
+  dom.explorerUpBtn.innerHTML = getIcon('up');
+  dom.explorerRefreshBtn.innerHTML = getIcon('refresh');
+  dom.explorerNewFolderBtn.innerHTML = `${getIcon('plus')} <span>New Folder</span>`;
+  dom.explorerPushBtn.innerHTML = `${getIcon('upload')} <span>Push File</span>`;
+  dom.explorerPushFolderBtn.innerHTML = `${getIcon('folder')} <span>Push Folder</span>`;
+  dom.explorerPullBtn.innerHTML = `${getIcon('download')} <span>Pull</span>`;
+  dom.explorerRenameBtn.innerHTML = `<span>✎ Rename</span>`;
+  dom.explorerDeleteBtn.innerHTML = `${getIcon('trash')} <span>Delete</span>`;
+
   dom.explorerUpBtn.addEventListener('click', () => {
     const parent = explorerGetParentPath(state.explorerPath);
     if (parent) {
@@ -262,6 +394,9 @@ export function initExplorer() {
   dom.explorerRefreshBtn.addEventListener('click', () => {
     void explorerNavigate(state.explorerPath);
   });
+  dom.explorerNewFolderBtn.addEventListener('click', () => {
+    void explorerCreateFolder();
+  });
   dom.explorerPushBtn.addEventListener('click', () => {
     void explorerPush();
   });
@@ -270,5 +405,11 @@ export function initExplorer() {
   });
   dom.explorerPullBtn.addEventListener('click', () => {
     void explorerPull();
+  });
+  dom.explorerRenameBtn.addEventListener('click', () => {
+    void explorerRenameSelected();
+  });
+  dom.explorerDeleteBtn.addEventListener('click', () => {
+    void explorerDeleteSelected();
   });
 }

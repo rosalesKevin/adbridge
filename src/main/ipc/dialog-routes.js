@@ -74,6 +74,27 @@ function registerDialogHandlers(ipcMain, dialog) {
     }
   });
 
+  ipcMain.handle('dialog:open-keystore', async () => {
+    try {
+      const result = await dialog.showOpenDialog({
+        title: 'Select Keystore File',
+        properties: ['openFile'],
+        filters: [
+          { name: 'Keystore Files', extensions: ['jks', 'keystore', 'p12', 'pfx'] },
+          { name: 'All Files', extensions: ['*'] }
+        ]
+      });
+
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: true, data: null };
+      }
+
+      return { success: true, data: result.filePaths[0] };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
   ipcMain.handle('dialog:confirm', async (_event, title, message) => {
     try {
       const result = await dialog.showMessageBox({

@@ -94,8 +94,72 @@ async function pullFile(deviceId, remotePath, localPath) {
   return stdout || stderr || 'No output from ADB';
 }
 
+async function makeDirectory(deviceId, remotePath) {
+  validateDeviceId(deviceId);
+
+  if (!remotePath || typeof remotePath !== 'string' || !remotePath.startsWith('/')) {
+    throw new Error('Remote path must start with /');
+  }
+  if (/[\0]/.test(remotePath)) {
+    throw new Error('Remote path contains invalid characters');
+  }
+
+  const escapedPath = remotePath.replace(/'/g, "'\\''");
+  const { stdout, stderr } = await runAdb(['-s', deviceId, 'shell', `mkdir '${escapedPath}'`], 10000);
+  return stdout || stderr || 'Directory created';
+}
+
+async function deleteEntry(deviceId, remotePath) {
+  validateDeviceId(deviceId);
+
+  if (!remotePath || typeof remotePath !== 'string' || !remotePath.startsWith('/')) {
+    throw new Error('Remote path must start with /');
+  }
+  if (remotePath === '/') {
+    throw new Error('Cannot delete root directory');
+  }
+  if (/[\0]/.test(remotePath)) {
+    throw new Error('Remote path contains invalid characters');
+  }
+
+  const escapedPath = remotePath.replace(/'/g, "'\\''");
+  const { stdout, stderr } = await runAdb(['-s', deviceId, 'shell', `rm -rf '${escapedPath}'`], 30000);
+  return stdout || stderr || 'Deleted';
+}
+
+async function renameEntry(deviceId, remotePath, newName) {
+  validateDeviceId(deviceId);
+
+  if (!remotePath || typeof remotePath !== 'string' || !remotePath.startsWith('/')) {
+    throw new Error('Remote path must start with /');
+  }
+  if (!newName || typeof newName !== 'string') {
+    throw new Error('New name cannot be empty');
+  }
+  if (newName.includes('/') || /[\0]/.test(newName)) {
+    throw new Error('New name contains invalid characters');
+  }
+
+  const parentPath = remotePath.endsWith('/')
+    ? remotePath.slice(0, -1).slice(0, remotePath.slice(0, -1).lastIndexOf('/') + 1)
+    : remotePath.slice(0, remotePath.lastIndexOf('/') + 1);
+
+  const newPath = `${parentPath}${newName}`;
+  const escapedOld = remotePath.replace(/'/g, "'\\''");
+  const escapedNew = newPath.replace(/'/g, "'\\''");
+
+  const { stdout, stderr } = await runAdb(
+    ['-s', deviceId, 'shell', `mv '${escapedOld}' '${escapedNew}'`],
+    10000
+  );
+  return stdout || stderr || 'Renamed';
+}
+
 module.exports = {
   listDirectory,
   pushFile,
-  pullFile
+  pullFile,
+  makeDirectory,
+  deleteEntry,
+  renameEntry
 };

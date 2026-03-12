@@ -1,4 +1,4 @@
-# ADBridge v1.1.0
+# ADBridge v1.2.0
 
 ADBridge is the swiss knife of ADB: a desktop UI that simplifies day-to-day ADB usage..
 
@@ -10,17 +10,22 @@ It is built for developers, testers, and anyone already familiar with ADB who wa
 
 - Device discovery with real-time connect/disconnect tracking
 - USB and wireless ADB workflows
-- Device info bar (model, Android version, battery, RAM)
+- Device info bar (model, Android version, battery, RAM, IPv4 address)
 - App management (list packages, uninstall, clear data)
 - APK installation from local files
-- Device file explorer (browse, push, pull)
-- Logcat viewer with app selector, tag filter, level filter, and export
+- Device file explorer (browse, push, pull, create folder, delete, rename)
+- Logcat viewer with app selector, tag filter, level filter, export, and ADB error surfacing
+- Auto-fill logcat app from a release APK file (extracts package name via `aapt`)
+- APK signing info and keystore inspector (Advanced, requires JDK `keytool`)
+- Resizable log panel
 - Screen mirroring via bundled scrcpy
 
 ## Requirements
 
 - [Node.js](https://nodejs.org) (v18+)
 - USB debugging enabled on Android devices
+- **Optional:** Android SDK build-tools (`aapt`) in PATH or `ANDROID_HOME` set — required for "From APK" logcat feature
+- **Optional:** JDK (`keytool`) in PATH or `JAVA_HOME` set — required for APK signing info and keystore inspection
 
 ## Run
 

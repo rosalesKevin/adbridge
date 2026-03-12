@@ -31,7 +31,7 @@ const runningProcesses = new Map();
  * @param {(line: string) => void} onLine - called for each stdout line
  * @returns {Promise<{ success: boolean, error?: string }>}
  */
-async function startLogcat(deviceId, packageName, tags, level, onLine) {
+async function startLogcat(deviceId, packageName, tags, level, onLine, onError) {
   validateDeviceId(deviceId);
   validatePackageName(packageName);
 
@@ -77,7 +77,7 @@ async function startLogcat(deviceId, packageName, tags, level, onLine) {
   // If no tags and level is "All"/"Verbose", no extra filter — show everything for this PID
 
   const proc = spawn(getAdbExe(), args, {
-    stdio: ['ignore', 'pipe', 'ignore']
+    stdio: ['ignore', 'pipe', 'pipe']
   });
 
   runningProcesses.set(deviceId, proc);
@@ -88,14 +88,25 @@ async function startLogcat(deviceId, packageName, tags, level, onLine) {
     if (line.trim()) onLine(line);
   });
 
+  const rlErr = readline.createInterface({ input: proc.stderr, crlfDelay: Infinity });
+
+  rlErr.on('line', (line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    onLine(`E/logcat-error: ${trimmed}`);
+    if (onError) onError(trimmed);
+  });
+
   proc.on('exit', () => {
     runningProcesses.delete(deviceId);
     rl.close();
+    rlErr.close();
   });
 
   proc.on('error', () => {
     runningProcesses.delete(deviceId);
     rl.close();
+    rlErr.close();
   });
 
   return { success: true };

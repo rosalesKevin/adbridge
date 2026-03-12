@@ -109,6 +109,33 @@ function registerAdbHandlers(ipcMain) {
     }
   });
 
+  ipcMain.handle('adb:mkdir', async (_event, deviceId, remotePath) => {
+    try {
+      const result = await adbService.makeDirectory(deviceId, remotePath);
+      return { success: true, data: result };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('adb:rm', async (_event, deviceId, remotePath) => {
+    try {
+      const result = await adbService.deleteEntry(deviceId, remotePath);
+      return { success: true, data: result };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('adb:rename', async (_event, deviceId, remotePath, newName) => {
+    try {
+      const result = await adbService.renameEntry(deviceId, remotePath, newName);
+      return { success: true, data: result };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
   ipcMain.handle('adb:wireless-disconnect', async (_event, deviceId) => {
     try {
       const result = await adbService.disconnectWireless(deviceId);

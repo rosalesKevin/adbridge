@@ -192,13 +192,29 @@
   display: flex;
 }
 
+.log-resize-handle {
+  flex-shrink: 0;
+  height: 5px;
+  cursor: ns-resize;
+  background: transparent;
+  border-top: 1px solid var(--border);
+  transition: background-color 0.15s;
+}
+
+.log-resize-handle:hover,
+.log-resize-handle.dragging {
+  background-color: var(--accent);
+  border-top-color: var(--accent);
+}
+
 .log-panel {
   flex-shrink: 0;
+  height: 165px;
+  min-height: 38px;
   padding: 8px 12px 10px;
   display: flex;
   flex-direction: column;
   gap: 5px;
-  border-top: 1px solid var(--border);
 }
 
 .log-header-row {

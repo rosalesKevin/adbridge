@@ -3,11 +3,15 @@ const logcatService = require('../logcat-service');
 function registerLogcatHandlers(ipcMain) {
   ipcMain.handle('logcat:start', async (event, deviceId, packageName, tag, level) => {
     try {
-      const result = await logcatService.startLogcat(deviceId, packageName, tag, level, (line) => {
-        if (!event.sender.isDestroyed()) {
-          event.sender.send('logcat:data', line);
+      const result = await logcatService.startLogcat(
+        deviceId, packageName, tag, level,
+        (line) => {
+          if (!event.sender.isDestroyed()) event.sender.send('logcat:data', line);
+        },
+        (errLine) => {
+          if (!event.sender.isDestroyed()) event.sender.send('logcat:error', errLine);
         }
-      });
+      );
       return result;
     } catch (err) {
       return { success: false, error: err.message };

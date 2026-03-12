@@ -39,6 +39,27 @@
   white-space: pre-line;
 }
 
+.confirm-input {
+  display: none;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  padding: 6px 9px;
+  outline: none;
+}
+
+.confirm-input:focus {
+  border-color: var(--accent);
+}
+
+.confirm-overlay.prompt-mode .confirm-input {
+  display: block;
+}
+
 .confirm-actions {
   display: flex;
   justify-content: flex-end;

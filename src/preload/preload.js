@@ -55,6 +55,15 @@ contextBridge.exposeInMainWorld('adb', {
 
     /** Disconnect a wireless ADB device → { success, data: string } */
     wirelessDisconnect: (deviceId) => ipcRenderer.invoke('adb:wireless-disconnect', deviceId),
+
+    /** Create a directory on the device → { success, data: string } */
+    mkdir: (deviceId, remotePath) => ipcRenderer.invoke('adb:mkdir', deviceId, remotePath),
+
+    /** Delete a file or folder on the device → { success, data: string } */
+    rm: (deviceId, remotePath) => ipcRenderer.invoke('adb:rm', deviceId, remotePath),
+
+    /** Rename a file or folder on the device → { success, data: string } */
+    rename: (deviceId, remotePath, newName) => ipcRenderer.invoke('adb:rename', deviceId, remotePath, newName),
 });
 
 contextBridge.exposeInMainWorld('scrcpy', {
@@ -85,6 +94,13 @@ contextBridge.exposeInMainWorld('logcat', {
 
     saveFile: (content, defaultName) =>
         ipcRenderer.invoke('logcat:save', content, defaultName),
+
+    /** Subscribe to logcat process errors (ADB stderr). Returns an unsubscribe function. */
+    onError: (callback) => {
+        const handler = (_event, line) => callback(line);
+        ipcRenderer.on('logcat:error', handler);
+        return () => ipcRenderer.removeListener('logcat:error', handler);
+    },
 });
 
 contextBridge.exposeInMainWorld('dialogs', {
@@ -102,4 +118,18 @@ contextBridge.exposeInMainWorld('dialogs', {
 
     /** Open native directory picker → { success, data: string|null } */
     pickDirectory: () => ipcRenderer.invoke('dialog:open-directory'),
+
+    /** Open native file picker for keystore files → { success, data: string|null } */
+    pickKeystore: () => ipcRenderer.invoke('dialog:open-keystore'),
+});
+
+contextBridge.exposeInMainWorld('keystore', {
+    /** Extract package name from a local APK file → { success, data: string } */
+    apkPackageName: (apkPath) => ipcRenderer.invoke('keystore:apk-package', apkPath),
+
+    /** Print signing certificate info from an APK → { success, data: string } */
+    apkSigning: (apkPath) => ipcRenderer.invoke('keystore:apk-signing', apkPath),
+
+    /** List keystore contents verbosely → { success, data: string } */
+    inspect: (keystorePath, password) => ipcRenderer.invoke('keystore:inspect', keystorePath, password),
 });
