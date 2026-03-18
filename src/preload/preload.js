@@ -64,6 +64,13 @@ contextBridge.exposeInMainWorld('adb', {
 
     /** Rename a file or folder on the device → { success, data: string } */
     rename: (deviceId, remotePath, newName) => ipcRenderer.invoke('adb:rename', deviceId, remotePath, newName),
+
+    /** Subscribe to file transfer progress updates. Returns an unsubscribe function. */
+    onTransferProgress: (callback) => {
+        const handler = (_event, progress) => callback(progress);
+        ipcRenderer.on('adb:transfer-progress', handler);
+        return () => ipcRenderer.removeListener('adb:transfer-progress', handler);
+    },
 });
 
 contextBridge.exposeInMainWorld('scrcpy', {
@@ -132,4 +139,26 @@ contextBridge.exposeInMainWorld('keystore', {
 
     /** List keystore contents verbosely → { success, data: string } */
     inspect: (keystorePath, password) => ipcRenderer.invoke('keystore:inspect', keystorePath, password),
+});
+
+contextBridge.exposeInMainWorld('updater', {
+    /** Subscribe to update-available events. Returns an unsubscribe function. */
+    onUpdateAvailable: (callback) => {
+        const handler = (_event, payload) => callback(payload);
+        ipcRenderer.on('updater:update-available', handler);
+        return () => ipcRenderer.removeListener('updater:update-available', handler);
+    },
+
+    /** Subscribe to download progress events. Returns an unsubscribe function. */
+    onProgress: (callback) => {
+        const handler = (_event, payload) => callback(payload);
+        ipcRenderer.on('updater:progress', handler);
+        return () => ipcRenderer.removeListener('updater:progress', handler);
+    },
+
+    /** Trigger download and install. */
+    downloadAndInstall: () => ipcRenderer.invoke('updater:download-and-install'),
+
+    /** Open the GitHub releases page in the browser. */
+    openReleasePage: () => ipcRenderer.invoke('updater:open-release-page'),
 });

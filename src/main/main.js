@@ -4,6 +4,7 @@ const { registerIpcHandlers } = require('./ipc-handlers');
 const adbService = require('./adb-service');
 const scrcpyService = require('./scrcpy-service');
 const logcatService = require('./logcat-service');
+const { checkForUpdates } = require('./ipc/updater-routes');
 
 /**
  * Creates the main application window.
@@ -35,6 +36,9 @@ function createWindow() {
 
     // Load the renderer HTML
     win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+    win.webContents.once('did-finish-load', () => {
+        checkForUpdates();
+    });
 }
 
 // App lifecycle

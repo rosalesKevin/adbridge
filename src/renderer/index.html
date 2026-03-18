@@ -26,6 +26,26 @@
         </div>
     </header>
 
+    <div id="updateBanner" class="update-banner hidden">
+        <div id="updateBannerAvailable" class="update-banner-state">
+            <span id="updateBannerMsg" class="update-banner-msg"></span>
+            <button id="updateNowBtn" class="btn btn-small btn-primary">Update Now</button>
+            <button id="updateLaterBtn" class="btn btn-small btn-ghost">Later</button>
+        </div>
+        <div id="updateBannerDownloading" class="update-banner-state hidden">
+            <span class="update-banner-msg">Downloading update...</span>
+            <div class="update-progress-bar">
+                <div id="updateProgressFill" class="update-progress-fill"></div>
+            </div>
+            <span id="updateProgressPct" class="update-banner-pct"></span>
+        </div>
+        <div id="updateBannerError" class="update-banner-state hidden">
+            <span class="update-banner-msg update-banner-msg-error">Update failed.</span>
+            <button id="updateOpenPageBtn" class="btn btn-small btn-secondary">Open Download Page</button>
+            <button id="updateDismissBtn" class="btn btn-small btn-ghost">Dismiss</button>
+        </div>
+    </div>
+
     <div id="deviceInfoBar" class="device-info-bar hidden"></div>
 
     <main class="main-content">

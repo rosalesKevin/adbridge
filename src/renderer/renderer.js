@@ -13,6 +13,7 @@ import { initTabs } from './modules/tabs.js';
 import { initLogcat, refreshLogcatAppList, stopLogcatIfRunning, clearLogcat } from './modules/logcat.js';
 import { loadDeviceInfo, clearDeviceInfo } from './modules/device-info.js';
 import { initResize } from './modules/resize.js';
+import { initUpdater } from './modules/updater.js';
 
 async function onDeviceSelected(device) {
   void stopLogcatIfRunning();
@@ -50,6 +51,7 @@ function initEvents() {
   initExplorer();
   initLogcat();
   initDevices({ onNoDevices, onDeviceSelected });
+  initUpdater();
 }
 
 async function init() {

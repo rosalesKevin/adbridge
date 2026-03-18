@@ -37,7 +37,10 @@ function startMirror(deviceId, onEvent) {
   }
 
   if (!fs.existsSync(SCRCPY_EXE)) {
-    return { success: false, error: `scrcpy not found at: ${SCRCPY_EXE}` };
+    return {
+      success: false,
+      error: `scrcpy not found at: ${SCRCPY_EXE}\n\nThis is usually caused by Windows Defender or antivirus quarantining scrcpy.exe after extraction. Check Windows Security → Protection History and restore the file, or add an exclusion for the ADBridge folder.`
+    };
   }
 
   // Arguments as array — same security principle as execFile in adb-service.js.

@@ -55,5 +55,16 @@ export const dom = {
   confirmMessage: document.getElementById('confirmMessage'),
   confirmInput: document.getElementById('confirmInput'),
   confirmCancelBtn: document.getElementById('confirmCancelBtn'),
-  confirmOkBtn: document.getElementById('confirmOkBtn')
+  confirmOkBtn: document.getElementById('confirmOkBtn'),
+  updateBanner: document.getElementById('updateBanner'),
+  updateBannerAvailable: document.getElementById('updateBannerAvailable'),
+  updateBannerDownloading: document.getElementById('updateBannerDownloading'),
+  updateBannerError: document.getElementById('updateBannerError'),
+  updateBannerMsg: document.getElementById('updateBannerMsg'),
+  updateNowBtn: document.getElementById('updateNowBtn'),
+  updateLaterBtn: document.getElementById('updateLaterBtn'),
+  updateProgressFill: document.getElementById('updateProgressFill'),
+  updateProgressPct: document.getElementById('updateProgressPct'),
+  updateOpenPageBtn: document.getElementById('updateOpenPageBtn'),
+  updateDismissBtn: document.getElementById('updateDismissBtn'),
 };
