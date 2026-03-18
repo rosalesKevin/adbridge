@@ -7,7 +7,7 @@ export const state = {
   autoRefreshTimerId: null,
   explorerPath: '/sdcard/',
   explorerEntries: [],
-  explorerSelected: null,
+  explorerSelectedItems: [],
   logcatRunning: false,
   logcatLines: []
 };

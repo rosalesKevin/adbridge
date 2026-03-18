@@ -1,5 +1,6 @@
 import { dom } from './dom.js';
 import { state } from './state.js';
+import { getExplorerActionState } from './explorer-action-state.mjs';
 
 export function setBusy(isBusy) {
   state.busy = isBusy;
@@ -8,9 +9,15 @@ export function setBusy(isBusy) {
   dom.installBtn.disabled = isBusy || !state.selectedApkPath;
   dom.uninstallBtn.disabled = isBusy || !state.selectedPackage;
   dom.clearDataBtn.disabled = isBusy || !state.selectedPackage;
-  dom.explorerPushBtn.disabled = isBusy || !state.selectedDeviceId;
-  dom.explorerPushFolderBtn.disabled = isBusy || !state.selectedDeviceId;
-  dom.explorerPullBtn.disabled = isBusy || !state.explorerSelected;
+  const explorerActionState = getExplorerActionState({
+    busy: isBusy,
+    hasDevice: Boolean(state.selectedDeviceId),
+    selectedCount: state.explorerSelectedItems.length
+  });
+  dom.explorerPushBtn.disabled = explorerActionState.pushDisabled;
+  dom.explorerPushFolderBtn.disabled = explorerActionState.pushFolderDisabled;
+  dom.explorerPullBtn.disabled = explorerActionState.pullDisabled;
+  dom.explorerDeleteBtn.disabled = explorerActionState.deleteDisabled;
   dom.explorerUpBtn.disabled = isBusy;
   dom.explorerRefreshBtn.disabled = isBusy;
   dom.explorerGoBtn.disabled = isBusy;

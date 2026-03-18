@@ -270,8 +270,7 @@ function downloadFile(url, destPath, onProgress) {
 
       file.on('finish', () => {
         cleanup();
-        file.close();
-        resolve();
+        file.close(() => resolve());
       });
 
       file.on('error', (err) => {

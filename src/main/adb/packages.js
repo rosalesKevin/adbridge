@@ -1,5 +1,5 @@
 const fs = require('node:fs');
-const { runAdb } = require('./runner');
+const { runAdb, spawnAdbWithInactivityTimeout } = require('./runner');
 const { validateDeviceId, validatePackageName } = require('./validation');
 
 async function getPackages(deviceId, userOnly = true) {
@@ -26,8 +26,8 @@ async function uninstallApp(deviceId, packageName) {
   validateDeviceId(deviceId);
   validatePackageName(packageName);
 
-  const { stdout, stderr } = await runAdb(['-s', deviceId, 'uninstall', packageName], 60000);
-  return stdout || stderr || 'No output from ADB';
+  // Use inactivity timeout for uninstalls as they can sometimes hang
+  return spawnAdbWithInactivityTimeout(['-s', deviceId, 'uninstall', packageName], 60000);
 }
 
 async function clearAppData(deviceId, packageName) {
@@ -52,8 +52,8 @@ async function installApk(deviceId, apkPath) {
     throw new Error(`File is not an APK: ${apkPath}`);
   }
 
-  const { stdout, stderr } = await runAdb(['-s', deviceId, 'install', '-r', apkPath], 120000);
-  return stdout || stderr || 'No output from ADB';
+  // Use inactivity timeout for installs as large APKs can take a long time to push and install
+  return spawnAdbWithInactivityTimeout(['-s', deviceId, 'install', '-r', apkPath], 60000);
 }
 
 module.exports = {

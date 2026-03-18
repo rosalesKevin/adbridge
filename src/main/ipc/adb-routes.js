@@ -64,18 +64,22 @@ function registerAdbHandlers(ipcMain) {
     }
   });
 
-  ipcMain.handle('adb:push', async (_event, deviceId, localPath, remotePath) => {
+  ipcMain.handle('adb:push', async (event, deviceId, localPath, remotePath) => {
     try {
-      const result = await adbService.pushFile(deviceId, localPath, remotePath);
+      const result = await adbService.pushFile(deviceId, localPath, remotePath, (progress) => {
+        event.sender.send('adb:transfer-progress', progress);
+      });
       return { success: true, data: result };
     } catch (err) {
       return { success: false, error: err.message };
     }
   });
 
-  ipcMain.handle('adb:pull', async (_event, deviceId, remotePath, localPath) => {
+  ipcMain.handle('adb:pull', async (event, deviceId, remotePath, localPath) => {
     try {
-      const result = await adbService.pullFile(deviceId, remotePath, localPath);
+      const result = await adbService.pullFile(deviceId, remotePath, localPath, (progress) => {
+        event.sender.send('adb:transfer-progress', progress);
+      });
       return { success: true, data: result };
     } catch (err) {
       return { success: false, error: err.message };

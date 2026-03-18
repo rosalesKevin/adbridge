@@ -1,6 +1,6 @@
 {
   "name": "adbridge",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Android device management via ADB",
   "main": "src/main/main.js",
   "scripts": {

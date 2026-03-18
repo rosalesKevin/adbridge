@@ -1,5 +1,5 @@
 const fs = require('node:fs');
-const { runAdb } = require('./runner');
+const { runAdb, spawnAdbWithInactivityTimeout } = require('./runner');
 const { validateDeviceId } = require('./validation');
 
 async function listDirectory(deviceId, remotePath) {
@@ -54,7 +54,26 @@ async function listDirectory(deviceId, remotePath) {
   return entries;
 }
 
-async function pushFile(deviceId, localPath, remotePath) {
+/**
+ * Parses ADB push/pull progress output.
+ * Example: [ 15%] /sdcard/file.bin: 15/100 MB
+ */
+function parseTransferLine(line) {
+  // Pattern for percentage and bytes/total
+  // e.g. [ 15%] /remote/path: 12345/67890
+  const match = line.match(/\[\s*(\d+)%\]\s+.*:\s+([\d.]+)\/([\d.]+)\s+(\w+)/);
+  if (match) {
+    return {
+      percent: parseInt(match[1], 10),
+      current: match[2],
+      total: match[3],
+      unit: match[4]
+    };
+  }
+  return null;
+}
+
+async function pushFile(deviceId, localPath, remotePath, onProgress) {
   validateDeviceId(deviceId);
 
   if (!localPath || typeof localPath !== 'string') {
@@ -69,29 +88,31 @@ async function pushFile(deviceId, localPath, remotePath) {
   if (!remotePath.startsWith('/')) {
     throw new Error('Remote path must start with / (e.g., /sdcard/Download/)');
   }
-  if (/[\0]/.test(remotePath)) {
-    throw new Error('Remote path contains invalid characters');
-  }
 
-  const { stdout, stderr } = await runAdb(['-s', deviceId, 'push', localPath, remotePath], 120000);
-  return stdout || stderr || 'No output from ADB';
+  return spawnAdbWithInactivityTimeout(['-s', deviceId, 'push', localPath, remotePath], 60000, (str) => {
+    if (onProgress) {
+      const progress = parseTransferLine(str);
+      if (progress) onProgress(progress);
+    }
+  });
 }
 
-async function pullFile(deviceId, remotePath, localPath) {
+async function pullFile(deviceId, remotePath, localPath, onProgress) {
   validateDeviceId(deviceId);
 
   if (!remotePath || typeof remotePath !== 'string' || !remotePath.startsWith('/')) {
     throw new Error('Remote path must start with /');
   }
-  if (/[\0]/.test(remotePath)) {
-    throw new Error('Remote path contains invalid characters');
-  }
   if (!localPath || typeof localPath !== 'string') {
     throw new Error('Local destination path cannot be empty');
   }
 
-  const { stdout, stderr } = await runAdb(['-s', deviceId, 'pull', remotePath, localPath], 120000);
-  return stdout || stderr || 'No output from ADB';
+  return spawnAdbWithInactivityTimeout(['-s', deviceId, 'pull', remotePath, localPath], 60000, (str) => {
+    if (onProgress) {
+      const progress = parseTransferLine(str);
+      if (progress) onProgress(progress);
+    }
+  });
 }
 
 async function makeDirectory(deviceId, remotePath) {
