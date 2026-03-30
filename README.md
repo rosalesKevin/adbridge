@@ -1,4 +1,4 @@
-# ADBridge v1.2.0
+# ADBridge v1.2.2
 
 ADBridge is the swiss knife of ADB: a desktop UI that simplifies day-to-day ADB usage..
 

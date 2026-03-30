@@ -53,7 +53,21 @@ async function installApk(deviceId, apkPath) {
   }
 
   // Use inactivity timeout for installs as large APKs can take a long time to push and install
-  return spawnAdbWithInactivityTimeout(['-s', deviceId, 'install', '-r', apkPath], 60000);
+  const installArgs = ['-s', deviceId, 'install', '-r', apkPath];
+
+  try {
+    return await spawnAdbWithInactivityTimeout(installArgs, 60000);
+  } catch (error) {
+    const message = String(error?.message || error);
+    if (!message.includes('INSTALL_FAILED_DEPRECATED_SDK_VERSION')) {
+      throw error;
+    }
+
+    return spawnAdbWithInactivityTimeout(
+      ['-s', deviceId, 'install', '--bypass-low-target-sdk-block', '-r', apkPath],
+      60000
+    );
+  }
 }
 
 module.exports = {

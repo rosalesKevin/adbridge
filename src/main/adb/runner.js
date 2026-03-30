@@ -1,6 +1,16 @@
 const { execFile, spawn } = require('node:child_process');
 const { getAdbExe } = require('./resolver');
 
+let activeTransferProcess = null;
+let transferCancelRequested = false;
+
+function cancelActiveTransfer() {
+  if (!activeTransferProcess) return false;
+  transferCancelRequested = true;
+  activeTransferProcess.kill();
+  return true;
+}
+
 /**
  * Executes an ADB command and returns a promise that resolves with stdout/stderr.
  * Has a fixed timeout for simple commands.
@@ -42,16 +52,19 @@ function spawnAdb(args) {
 function spawnAdbWithInactivityTimeout(args, inactivityTimeoutMs = 30000, onData) {
   return new Promise((resolve, reject) => {
     const child = spawn(getAdbExe(), args);
+    activeTransferProcess = child;
+    transferCancelRequested = false;
     let output = '';
     let errorOutput = '';
     let timeoutTimer = null;
+    let timedOut = false;
 
     const resetTimeout = () => {
       if (timeoutTimer) clearTimeout(timeoutTimer);
       if (inactivityTimeoutMs > 0) {
         timeoutTimer = setTimeout(() => {
+          timedOut = true;
           child.kill();
-          reject(new Error(`ADB process timed out due to inactivity (${inactivityTimeoutMs / 1000}s)`));
         }, inactivityTimeoutMs);
       }
     };
@@ -73,7 +86,17 @@ function spawnAdbWithInactivityTimeout(args, inactivityTimeoutMs = 30000, onData
     });
 
     child.on('close', (code) => {
+      activeTransferProcess = null;
       if (timeoutTimer) clearTimeout(timeoutTimer);
+      if (timedOut) {
+        reject(new Error(`ADB process timed out due to inactivity (${inactivityTimeoutMs / 1000}s)`));
+        return;
+      }
+      if (transferCancelRequested) {
+        transferCancelRequested = false;
+        reject(new Error('Transfer cancelled'));
+        return;
+      }
       if (code === 0) {
         resolve(output.trim() || 'Success');
       } else {
@@ -88,4 +111,4 @@ function spawnAdbWithInactivityTimeout(args, inactivityTimeoutMs = 30000, onData
   });
 }
 
-module.exports = { runAdb, spawnAdb, spawnAdbWithInactivityTimeout };
+module.exports = { runAdb, spawnAdb, spawnAdbWithInactivityTimeout, cancelActiveTransfer };

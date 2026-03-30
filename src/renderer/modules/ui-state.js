@@ -17,10 +17,10 @@ export function setBusy(isBusy) {
   dom.explorerPushBtn.disabled = explorerActionState.pushDisabled;
   dom.explorerPushFolderBtn.disabled = explorerActionState.pushFolderDisabled;
   dom.explorerPullBtn.disabled = explorerActionState.pullDisabled;
+  dom.explorerRenameBtn.disabled = explorerActionState.renameDisabled;
   dom.explorerDeleteBtn.disabled = explorerActionState.deleteDisabled;
   dom.explorerUpBtn.disabled = isBusy;
   dom.explorerRefreshBtn.disabled = isBusy;
-  dom.explorerGoBtn.disabled = isBusy;
 }
 
 export function updateAppCount(filtered, total) {

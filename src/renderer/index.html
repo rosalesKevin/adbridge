@@ -11,7 +11,7 @@
 <body>
 
     <header class="header-bar">
-        <h1 class="app-title">ADBridge</h1>
+        <h1 class="app-title">ADBridge <span id="appVersion" class="app-version" aria-label="Application version"></span></h1>
         <div class="header-center">
             <button id="refreshDevicesBtn" class="btn btn-icon btn-small" title="Refresh devices">↻</button>
             <select id="deviceSelect" class="device-select">
@@ -126,7 +126,6 @@
                             <input id="explorerPathInput" type="text" class="dest-input explorer-path-input"
                                    placeholder="/sdcard/" value="/sdcard/" spellcheck="false">
                         </div>
-                        <button id="explorerGoBtn" class="btn btn-secondary btn-small">Go</button>
                         <button id="explorerRefreshBtn" class="btn btn-secondary btn-icon btn-small" title="Refresh">↻</button>
                     </div>
 
@@ -165,6 +164,10 @@
                 <!-- Status bar -->
                 <div class="explorer-status-bar">
                     <span id="explorerStatus" class="explorer-status">—</span>
+                    <button id="explorerCancelBtn" class="btn btn-danger btn-small explorer-cancel-btn hidden">✕ Cancel</button>
+                    <div id="explorerProgressBar" class="explorer-progress-bar hidden">
+                        <div id="explorerProgressFill" class="explorer-progress-fill"></div>
+                    </div>
                 </div>
 
             </div>
@@ -211,7 +214,9 @@
     <footer class="log-panel">
         <div class="log-header-row">
             <h2 class="section-header">Log</h2>
-            <button id="clearLogBtn" class="btn btn-small btn-muted">Clear</button>
+            <div class="log-header-actions">
+                <button id="clearLogBtn" class="btn btn-small btn-muted">Clear</button>
+            </div>
         </div>
         <div id="logOutput" class="log-area"></div>
     </footer>

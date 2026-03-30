@@ -39,7 +39,7 @@ contextBridge.exposeInMainWorld('adb', {
     push: (deviceId, localPath, remotePath) => ipcRenderer.invoke('adb:push', deviceId, localPath, remotePath),
 
     /** Pull a file from the device to the host → { success, data: string } */
-    pull: (deviceId, remotePath, localPath) => ipcRenderer.invoke('adb:pull', deviceId, remotePath, localPath),
+    pull: (deviceId, remotePath, localPath, totalSize) => ipcRenderer.invoke('adb:pull', deviceId, remotePath, localPath, totalSize),
 
     /** List entries on the device → { success, data: Array<{name, isDir}> } */
     ls: (deviceId, remotePath) => ipcRenderer.invoke('adb:ls', deviceId, remotePath),
@@ -64,6 +64,12 @@ contextBridge.exposeInMainWorld('adb', {
 
     /** Rename a file or folder on the device → { success, data: string } */
     rename: (deviceId, remotePath, newName) => ipcRenderer.invoke('adb:rename', deviceId, remotePath, newName),
+
+    /** Cancel the active push/pull transfer → { success, data: boolean } */
+    cancelTransfer: () => ipcRenderer.invoke('adb:cancel-transfer'),
+
+    /** Check if a device IP is on the same subnet as any PC network interface → { success, data: { sameNetwork: boolean } } */
+    checkSameNetwork: (deviceIp) => ipcRenderer.invoke('adb:check-same-network', deviceIp),
 
     /** Subscribe to file transfer progress updates. Returns an unsubscribe function. */
     onTransferProgress: (callback) => {
@@ -128,6 +134,11 @@ contextBridge.exposeInMainWorld('dialogs', {
 
     /** Open native file picker for keystore files → { success, data: string|null } */
     pickKeystore: () => ipcRenderer.invoke('dialog:open-keystore'),
+});
+
+contextBridge.exposeInMainWorld('appInfo', {
+    /** Get application metadata → { success, data: { version: string } } */
+    version: () => ipcRenderer.invoke('app:version'),
 });
 
 contextBridge.exposeInMainWorld('keystore', {

@@ -15,6 +15,17 @@ import { loadDeviceInfo, clearDeviceInfo } from './modules/device-info.js';
 import { initResize } from './modules/resize.js';
 import { initUpdater } from './modules/updater.js';
 
+async function initAppVersion() {
+  try {
+    const result = await window.appInfo.version();
+    if (result?.success && result.data?.version) {
+      dom.appVersion.textContent = `v${result.data.version}`;
+    }
+  } catch (error) {
+    appendLog(`Failed to load app version: ${error.message}`);
+  }
+}
+
 async function onDeviceSelected(device) {
   void stopLogcatIfRunning();
   void loadDeviceInfo(device.id);
@@ -57,6 +68,7 @@ function initEvents() {
 async function init() {
   appendLog('ADBridge starting...');
   initEvents();
+  await initAppVersion();
   await checkAdbStatus();
   await refreshDevices({ onNoDevices, onDeviceSelected });
 }

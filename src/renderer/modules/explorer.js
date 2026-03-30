@@ -6,6 +6,7 @@ import { setBusy } from './ui-state.js';
 import { showConfirmDialog, showPromptDialog } from './confirm-dialog.js';
 import { getIcon } from './icons.js';
 import { getExplorerActionState } from './explorer-action-state.mjs';
+import { renameSingleExplorerSelection } from './explorer-rename.mjs';
 
 export function clearExplorer() {
   state.explorerPath = '/sdcard/';
@@ -28,6 +29,7 @@ function explorerUpdateActionButtons() {
   dom.explorerPushBtn.disabled = actionState.pushDisabled;
   dom.explorerPushFolderBtn.disabled = actionState.pushFolderDisabled;
   dom.explorerPullBtn.disabled = actionState.pullDisabled;
+  dom.explorerRenameBtn.disabled = actionState.renameDisabled;
   dom.explorerDeleteBtn.disabled = actionState.deleteDisabled;
 }
 
@@ -58,19 +60,35 @@ function explorerUpdateStatus() {
   }
 }
 
+function showTransferProgress(percent) {
+  dom.explorerProgressBar.classList.remove('hidden');
+  dom.explorerProgressFill.style.width = `${percent}%`;
+  dom.explorerCancelBtn.classList.remove('hidden');
+  dom.explorerCancelBtn.disabled = false;
+}
+
+function hideTransferProgress() {
+  dom.explorerProgressBar.classList.add('hidden');
+  dom.explorerProgressFill.style.width = '0%';
+  dom.explorerCancelBtn.classList.add('hidden');
+  dom.explorerCancelBtn.disabled = true;
+}
+
 function renderTransferProgress(label, progress, startTime) {
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   const percent = progress.percent || 0;
-  const current = progress.current || '0';
-  const total = progress.total || '0';
-  const unit = progress.unit || '';
+
+  const detail = (progress.current && progress.total && progress.unit)
+    ? ` (${progress.current}/${progress.total} ${progress.unit})`
+    : '';
 
   dom.explorerStatus.innerHTML = `
     <span class="explorer-transfer-status">
       <span class="explorer-transfer-spinner"></span>
-      ${label}: ${percent}% (${current}/${total} ${unit}) • ${elapsed}s
+      ${label}: ${percent}%${detail} • ${elapsed}s
     </span>
   `;
+  showTransferProgress(percent);
 }
 
 let lastSelectedIndex = -1;
@@ -248,6 +266,7 @@ async function explorerPush() {
 
   appendLog(`Pushing ${picked.data} -> ${state.selectedDeviceId}:${state.explorerPath}...`);
   dom.explorerStatus.innerHTML = '<span class="explorer-transfer-status"><span class="explorer-transfer-spinner"></span>Starting upload...</span>';
+  showTransferProgress(0);
   setBusy(true);
 
   const startTime = Date.now();
@@ -261,12 +280,16 @@ async function explorerPush() {
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       appendLog(`Push result: ${result.data} (took ${elapsed}s)`);
       await explorerNavigate(state.explorerPath);
+    } else if (result.error === 'Transfer cancelled') {
+      appendLog('Upload cancelled.');
+      explorerUpdateStatus();
     } else {
       appendLog(`Push FAILED: ${result.error}`);
       explorerUpdateStatus();
     }
   } finally {
     unsub();
+    hideTransferProgress();
     setBusy(false);
   }
 }
@@ -282,6 +305,7 @@ async function explorerPushFolder() {
 
   appendLog(`Pushing folder ${picked.data} -> ${state.selectedDeviceId}:${state.explorerPath}...`);
   dom.explorerStatus.innerHTML = '<span class="explorer-transfer-status"><span class="explorer-transfer-spinner"></span>Starting folder upload...</span>';
+  showTransferProgress(0);
   setBusy(true);
 
   const startTime = Date.now();
@@ -295,12 +319,16 @@ async function explorerPushFolder() {
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       appendLog(`Push folder result: ${result.data} (took ${elapsed}s)`);
       await explorerNavigate(state.explorerPath);
+    } else if (result.error === 'Transfer cancelled') {
+      appendLog('Upload cancelled.');
+      explorerUpdateStatus();
     } else {
       appendLog(`Push folder FAILED: ${result.error}`);
       explorerUpdateStatus();
     }
   } finally {
     unsub();
+    hideTransferProgress();
     setBusy(false);
   }
 }
@@ -385,6 +413,24 @@ async function explorerDeleteSelected() {
   await explorerNavigate(state.explorerPath);
 }
 
+async function explorerRenameSelected() {
+  await renameSingleExplorerSelection({
+    selectedDeviceId: state.selectedDeviceId,
+    explorerPath: state.explorerPath,
+    selectedItems: state.explorerSelectedItems,
+    promptForName: async (currentName) => showPromptDialog({
+      title: 'Rename',
+      message: `Rename "${currentName}" in ${state.explorerPath}`,
+      placeholder: currentName,
+      confirmText: 'Rename'
+    }),
+    renameEntry: (deviceId, remotePath, newName) => window.adb.rename(deviceId, remotePath, newName),
+    refresh: explorerNavigate,
+    log: appendLog,
+    setBusy
+  });
+}
+
 async function explorerPull() {
   if (!state.selectedDeviceId) {
     appendLog('ERROR: No device selected.');
@@ -400,19 +446,21 @@ async function explorerPull() {
 
   const destDir = picked.data;
   setBusy(true);
-  
+
   const totalItems = state.explorerSelectedItems.length;
   let successCount = 0;
   let failCount = 0;
+  let wasCancelled = false;
   const overallStartTime = Date.now();
 
   for (let i = 0; i < totalItems; i++) {
     const entry = state.explorerSelectedItems[i];
     const remotePath = `${state.explorerPath}${entry.name}`;
-    
+
     appendLog(`Pulling (${i + 1}/${totalItems}) ${state.selectedDeviceId}:${remotePath} -> ${destDir}...`);
     dom.explorerStatus.innerHTML = `<span class="explorer-transfer-status"><span class="explorer-transfer-spinner"></span>Starting download (${i + 1}/${totalItems}): ${entry.name}...</span>`;
-    
+    showTransferProgress(0);
+
     const startTime = Date.now();
     const unsub = window.adb.onTransferProgress((progress) => {
       const prefix = totalItems > 1 ? `[${i + 1}/${totalItems}] ` : '';
@@ -420,11 +468,15 @@ async function explorerPull() {
     });
 
     try {
-      const result = await window.adb.pull(state.selectedDeviceId, remotePath, destDir);
+      const result = await window.adb.pull(state.selectedDeviceId, remotePath, destDir, entry.size ?? 0);
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       if (result.success) {
         appendLog(`Pull result: ${entry.name} (took ${elapsed}s)`);
         successCount++;
+      } else if (result.error === 'Transfer cancelled') {
+        wasCancelled = true;
+        appendLog('Download cancelled.');
+        break;
       } else {
         appendLog(`Pull FAILED for ${entry.name}: ${result.error}`);
         failCount++;
@@ -435,11 +487,12 @@ async function explorerPull() {
   }
 
   setBusy(false);
+  hideTransferProgress();
   explorerUpdateStatus();
-  
-  const totalElapsed = ((Date.now() - overallStartTime) / 1000).toFixed(1);
-  if (totalItems > 1) {
-      appendLog(`Pull completed: ${successCount} successful, ${failCount} failed. Total time: ${totalElapsed}s.`);
+
+  if (!wasCancelled && totalItems > 1) {
+    const totalElapsed = ((Date.now() - overallStartTime) / 1000).toFixed(1);
+    appendLog(`Pull completed: ${successCount} successful, ${failCount} failed. Total time: ${totalElapsed}s.`);
   }
 }
 
@@ -472,13 +525,6 @@ export function initExplorer() {
     }
   });
 
-  dom.explorerGoBtn.addEventListener('click', () => {
-    const path = dom.explorerPathInput.value.trim();
-    if (path.startsWith('/')) {
-      void explorerNavigate(path);
-    }
-  });
-
   dom.explorerPathInput.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter') return;
     const path = dom.explorerPathInput.value.trim();
@@ -502,7 +548,15 @@ export function initExplorer() {
   dom.explorerPullBtn.addEventListener('click', () => {
     void explorerPull();
   });
+  dom.explorerRenameBtn.addEventListener('click', () => {
+    void explorerRenameSelected();
+  });
   dom.explorerDeleteBtn.addEventListener('click', () => {
     void explorerDeleteSelected();
+  });
+
+  dom.explorerCancelBtn.addEventListener('click', () => {
+    dom.explorerCancelBtn.disabled = true;
+    void window.adb.cancelTransfer();
   });
 }
