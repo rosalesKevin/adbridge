@@ -156,13 +156,15 @@
 
 .explorer-status-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  padding: 6px 10px;
+  padding: 6px 10px 5px;
   background-color: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   flex-shrink: 0;
   margin-top: 4px;
+  gap: 5px 0;
 }
 
 .explorer-status {
@@ -194,4 +196,26 @@
 
 @keyframes explorer-spin {
   to { transform: rotate(360deg); }
+}
+
+.explorer-cancel-btn {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.explorer-progress-bar {
+  width: 100%;
+  height: 4px;
+  background-color: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.explorer-progress-fill {
+  height: 100%;
+  width: 0%;
+  background-color: var(--accent);
+  border-radius: 2px;
+  transition: width 0.15s ease;
 }

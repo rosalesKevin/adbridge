@@ -1,3 +1,4 @@
+const os = require('node:os');
 const { spawn } = require('node:child_process');
 const { runAdb } = require('./runner');
 const { getAdbExe } = require('./resolver');
@@ -261,7 +262,34 @@ async function getDeviceInfo(deviceId) {
   };
 }
 
+function checkSameNetwork(deviceIp) {
+  if (!deviceIp || !/^\d+\.\d+\.\d+\.\d+$/.test(deviceIp)) {
+    return { sameNetwork: false };
+  }
+
+  const deviceOctets = deviceIp.split('.').map(Number);
+  const interfaces = os.networkInterfaces();
+
+  for (const ifaces of Object.values(interfaces)) {
+    for (const iface of ifaces) {
+      if (iface.family !== 'IPv4' || iface.internal) continue;
+
+      const pcOctets = iface.address.split('.').map(Number);
+      const maskOctets = iface.netmask.split('.').map(Number);
+
+      const match = maskOctets.every(
+        (mask, i) => (deviceOctets[i] & mask) === (pcOctets[i] & mask)
+      );
+
+      if (match) return { sameNetwork: true };
+    }
+  }
+
+  return { sameNetwork: false };
+}
+
 module.exports = {
+  parseDevicesOutput,
   checkAdb,
   getDevices,
   startDeviceTracking,
@@ -270,4 +298,5 @@ module.exports = {
   getDeviceIp,
   setupWireless,
   disconnectWireless,
+  checkSameNetwork,
 };

@@ -39,7 +39,7 @@ contextBridge.exposeInMainWorld('adb', {
     push: (deviceId, localPath, remotePath) => ipcRenderer.invoke('adb:push', deviceId, localPath, remotePath),
 
     /** Pull a file from the device to the host → { success, data: string } */
-    pull: (deviceId, remotePath, localPath) => ipcRenderer.invoke('adb:pull', deviceId, remotePath, localPath),
+    pull: (deviceId, remotePath, localPath, totalSize) => ipcRenderer.invoke('adb:pull', deviceId, remotePath, localPath, totalSize),
 
     /** List entries on the device → { success, data: Array<{name, isDir}> } */
     ls: (deviceId, remotePath) => ipcRenderer.invoke('adb:ls', deviceId, remotePath),
@@ -64,6 +64,12 @@ contextBridge.exposeInMainWorld('adb', {
 
     /** Rename a file or folder on the device → { success, data: string } */
     rename: (deviceId, remotePath, newName) => ipcRenderer.invoke('adb:rename', deviceId, remotePath, newName),
+
+    /** Cancel the active push/pull transfer → { success, data: boolean } */
+    cancelTransfer: () => ipcRenderer.invoke('adb:cancel-transfer'),
+
+    /** Check if a device IP is on the same subnet as any PC network interface → { success, data: { sameNetwork: boolean } } */
+    checkSameNetwork: (deviceIp) => ipcRenderer.invoke('adb:check-same-network', deviceIp),
 
     /** Subscribe to file transfer progress updates. Returns an unsubscribe function. */
     onTransferProgress: (callback) => {
@@ -130,6 +136,11 @@ contextBridge.exposeInMainWorld('dialogs', {
     pickKeystore: () => ipcRenderer.invoke('dialog:open-keystore'),
 });
 
+contextBridge.exposeInMainWorld('appInfo', {
+    /** Get application metadata → { success, data: { version: string } } */
+    version: () => ipcRenderer.invoke('app:version'),
+});
+
 contextBridge.exposeInMainWorld('keystore', {
     /** Extract package name from a local APK file → { success, data: string } */
     apkPackageName: (apkPath) => ipcRenderer.invoke('keystore:apk-package', apkPath),
@@ -148,16 +159,6 @@ contextBridge.exposeInMainWorld('updater', {
         ipcRenderer.on('updater:update-available', handler);
         return () => ipcRenderer.removeListener('updater:update-available', handler);
     },
-
-    /** Subscribe to download progress events. Returns an unsubscribe function. */
-    onProgress: (callback) => {
-        const handler = (_event, payload) => callback(payload);
-        ipcRenderer.on('updater:progress', handler);
-        return () => ipcRenderer.removeListener('updater:progress', handler);
-    },
-
-    /** Trigger download and install. */
-    downloadAndInstall: () => ipcRenderer.invoke('updater:download-and-install'),
 
     /** Open the GitHub releases page in the browser. */
     openReleasePage: () => ipcRenderer.invoke('updater:open-release-page'),

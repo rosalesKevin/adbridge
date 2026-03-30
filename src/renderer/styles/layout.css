@@ -11,6 +11,9 @@
 }
 
 .app-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   font-size: 16px;
   font-weight: 700;
   color: #ffffff;
@@ -221,4 +224,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.log-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-version {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  user-select: text;
 }

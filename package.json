@@ -1,17 +1,19 @@
 {
   "name": "adbridge",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Android device management via ADB",
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
+    "test": "node tests/updater.test.js && node tests/manual-updater.test.js && node tests/app-info.test.js && node tests/runner.test.js && node tests/device.test.js && node tests/files.test.js && node tests/packages.test.js && node tests/adb-routes.test.js && node tests/explorer-action-state.test.mjs && node tests/explorer-rename.test.mjs && node tests/version-placement.test.js && node tests/explorer-go-removal.test.js && node tests/build-config.test.js",
     "build": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win portable",
     "build:dir": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win dir"
   },
   "devDependencies": {
     "cross-env": "^10.1.0",
     "electron": "^28.3.0",
-    "electron-builder": "^24.13.0"
+    "electron-builder": "^24.13.0",
+    "rcedit": "^5.0.2"
   },
   "build": {
     "appId": "com.adbridge.app",
@@ -34,6 +36,7 @@
     "portable": {
       "artifactName": "ADBridge.exe"
     },
+    "afterPack": "scripts/after-pack.js",
     "files": [
       "src/**/*",
       "assets/icon.ico"
@@ -42,7 +45,13 @@
       {
         "from": "vendor/scrcpy",
         "to": "scrcpy",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "assets/icon.ico",
+        "to": "icon.ico"
       }
     ]
   }

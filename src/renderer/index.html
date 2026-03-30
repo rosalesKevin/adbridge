@@ -11,7 +11,7 @@
 <body>
 
     <header class="header-bar">
-        <h1 class="app-title">ADBridge</h1>
+        <h1 class="app-title">ADBridge <span id="appVersion" class="app-version" aria-label="Application version"></span></h1>
         <div class="header-center">
             <button id="refreshDevicesBtn" class="btn btn-icon btn-small" title="Refresh devices">↻</button>
             <select id="deviceSelect" class="device-select">
@@ -29,21 +29,10 @@
     <div id="updateBanner" class="update-banner hidden">
         <div id="updateBannerAvailable" class="update-banner-state">
             <span id="updateBannerMsg" class="update-banner-msg"></span>
-            <button id="updateNowBtn" class="btn btn-small btn-primary">Update Now</button>
+            <button id="updateOpenPageBtn" class="btn btn-small btn-primary">Open Download Page</button>
             <button id="updateLaterBtn" class="btn btn-small btn-ghost">Later</button>
         </div>
-        <div id="updateBannerDownloading" class="update-banner-state hidden">
-            <span class="update-banner-msg">Downloading update...</span>
-            <div class="update-progress-bar">
-                <div id="updateProgressFill" class="update-progress-fill"></div>
-            </div>
-            <span id="updateProgressPct" class="update-banner-pct"></span>
-        </div>
-        <div id="updateBannerError" class="update-banner-state hidden">
-            <span class="update-banner-msg update-banner-msg-error">Update failed.</span>
-            <button id="updateOpenPageBtn" class="btn btn-small btn-secondary">Open Download Page</button>
-            <button id="updateDismissBtn" class="btn btn-small btn-ghost">Dismiss</button>
-        </div>
+        <button id="updateDismissBtn" class="btn btn-small btn-ghost">Dismiss</button>
     </div>
 
     <div id="deviceInfoBar" class="device-info-bar hidden"></div>
@@ -126,7 +115,6 @@
                             <input id="explorerPathInput" type="text" class="dest-input explorer-path-input"
                                    placeholder="/sdcard/" value="/sdcard/" spellcheck="false">
                         </div>
-                        <button id="explorerGoBtn" class="btn btn-secondary btn-small">Go</button>
                         <button id="explorerRefreshBtn" class="btn btn-secondary btn-icon btn-small" title="Refresh">↻</button>
                     </div>
 
@@ -165,6 +153,10 @@
                 <!-- Status bar -->
                 <div class="explorer-status-bar">
                     <span id="explorerStatus" class="explorer-status">—</span>
+                    <button id="explorerCancelBtn" class="btn btn-danger btn-small explorer-cancel-btn hidden">✕ Cancel</button>
+                    <div id="explorerProgressBar" class="explorer-progress-bar hidden">
+                        <div id="explorerProgressFill" class="explorer-progress-fill"></div>
+                    </div>
                 </div>
 
             </div>
@@ -211,7 +203,9 @@
     <footer class="log-panel">
         <div class="log-header-row">
             <h2 class="section-header">Log</h2>
-            <button id="clearLogBtn" class="btn btn-small btn-muted">Clear</button>
+            <div class="log-header-actions">
+                <button id="clearLogBtn" class="btn btn-small btn-muted">Clear</button>
+            </div>
         </div>
         <div id="logOutput" class="log-area"></div>
     </footer>

@@ -69,17 +69,19 @@ function registerAdbHandlers(ipcMain) {
       const result = await adbService.pushFile(deviceId, localPath, remotePath, (progress) => {
         event.sender.send('adb:transfer-progress', progress);
       });
+      event.sender.send('adb:transfer-progress', { percent: 100, current: null, total: null, unit: null });
       return { success: true, data: result };
     } catch (err) {
       return { success: false, error: err.message };
     }
   });
 
-  ipcMain.handle('adb:pull', async (event, deviceId, remotePath, localPath) => {
+  ipcMain.handle('adb:pull', async (event, deviceId, remotePath, localPath, totalSize) => {
     try {
       const result = await adbService.pullFile(deviceId, remotePath, localPath, (progress) => {
         event.sender.send('adb:transfer-progress', progress);
-      });
+      }, totalSize);
+      event.sender.send('adb:transfer-progress', { percent: 100, current: null, total: null, unit: null });
       return { success: true, data: result };
     } catch (err) {
       return { success: false, error: err.message };
@@ -146,6 +148,23 @@ function registerAdbHandlers(ipcMain) {
       return { success: true, data: result };
     } catch (err) {
       return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('adb:cancel-transfer', () => {
+    try {
+      const cancelled = adbService.cancelActiveTransfer();
+      return { success: true, data: cancelled };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('adb:check-same-network', (_event, deviceIp) => {
+    try {
+      return { success: true, data: adbService.checkSameNetwork(deviceIp) };
+    } catch (err) {
+      return { success: true, data: { sameNetwork: false } };
     }
   });
 }

@@ -6,6 +6,12 @@ const scrcpyService = require('./scrcpy-service');
 const logcatService = require('./logcat-service');
 const { checkForUpdates } = require('./ipc/updater-routes');
 
+// Set a stable AppUserModelId so Windows taskbar always shows the correct icon,
+// regardless of the temp directory the portable exe extracts into.
+if (process.platform === 'win32') {
+    app.setAppUserModelId('com.adbridge.app');
+}
+
 /**
  * Creates the main application window.
  *
@@ -15,13 +21,19 @@ const { checkForUpdates } = require('./ipc/updater-routes');
  * - preload script           → exposes only a safe, limited API via contextBridge
  */
 function createWindow() {
+    // In packaged mode the icon must be a real file on disk (not inside app.asar).
+    // extraResources places icon.ico at process.resourcesPath/icon.ico.
+    const iconPath = app.isPackaged
+        ? path.join(process.resourcesPath, 'icon.ico')
+        : path.join(__dirname, '..', '..', 'assets', 'icon.ico');
+
     const win = new BrowserWindow({
         width: 950,
         height: 720,
         minWidth: 750,
         minHeight: 550,
         title: 'ADBridge',
-        icon: path.join(__dirname, '..', '..', 'assets', 'icon.ico'),
+        icon: iconPath,
         backgroundColor: '#1a1a2e',
         webPreferences: {
             preload: path.join(__dirname, '..', 'preload', 'preload.js'),

@@ -8,7 +8,7 @@ let _dismissed = false;
 // ── Banner state helpers ──────────────────────────────────────────────────────
 
 function showState(activeId) {
-  const states = ['updateBannerAvailable', 'updateBannerDownloading', 'updateBannerError'];
+  const states = ['updateBannerAvailable'];
   for (const id of states) {
     dom[id].classList.toggle('hidden', id !== activeId);
   }
@@ -27,40 +27,17 @@ function onUpdateAvailable({ version }) {
   showState('updateBannerAvailable');
 }
 
-function onProgress({ status, percent }) {
-  if (status === 'downloading') {
-    showState('updateBannerDownloading');
-    if (percent !== undefined) {
-      dom.updateProgressFill.style.width = `${percent}%`;
-      dom.updateProgressPct.textContent = `${percent}%`;
-      dom.updateProgressFill.style.opacity = '';
-    } else {
-      dom.updateProgressFill.style.width = '100%';
-      dom.updateProgressPct.textContent = '';
-      dom.updateProgressFill.style.opacity = '0.5';
-    }
-  } else if (status === 'error') {
-    showState('updateBannerError');
-  }
-}
-
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 export function initUpdater() {
   window.updater.onUpdateAvailable(onUpdateAvailable);
-  window.updater.onProgress(onProgress);
-
-  dom.updateNowBtn.addEventListener('click', () => {
-    window.updater.downloadAndInstall();
+  dom.updateOpenPageBtn.addEventListener('click', () => {
+    window.updater.openReleasePage();
   });
 
   dom.updateLaterBtn.addEventListener('click', () => {
     _dismissed = true;
     hideBanner();
-  });
-
-  dom.updateOpenPageBtn.addEventListener('click', () => {
-    window.updater.openReleasePage();
   });
 
   dom.updateDismissBtn.addEventListener('click', () => {

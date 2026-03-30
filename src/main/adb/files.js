@@ -1,6 +1,53 @@
 const fs = require('node:fs');
+const path = require('node:path');
 const { runAdb, spawnAdbWithInactivityTimeout } = require('./runner');
 const { validateDeviceId } = require('./validation');
+
+/**
+ * Returns the size of a remote file in bytes.
+ * Tries `stat` first (works on all Android versions, outputs "Size: N"),
+ * then falls back to `ls -la` parsing.
+ * Returns 0 on any error (file not found, directory, unsupported device).
+ */
+async function getRemoteFileSize(deviceId, remotePath) {
+  try {
+    const escaped = remotePath.replace(/'/g, "'\\''");
+    // stat is available on both toybox and busybox Android and outputs "Size: N"
+    try {
+      const { stdout: statOut } = await runAdb(['-s', deviceId, 'shell', `stat '${escaped}'`], 3000);
+      const statMatch = statOut.match(/Size:\s+(\d+)/);
+      if (statMatch) return parseInt(statMatch[1], 10);
+    } catch {}
+    // Fallback: ls -la
+    const { stdout } = await runAdb(['-s', deviceId, 'shell', `ls -la '${escaped}'`], 3000);
+    // Toybox (Android 6+): ... size YYYY-MM-DD HH:MM name
+    let match = stdout.match(/\s(\d+)\s+\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/);
+    if (match) return parseInt(match[1], 10);
+    // Busybox: ... size Mon DD HH:MM or Mon DD YYYY
+    match = stdout.match(/\s(\d+)\s+[A-Z][a-z]{2}\s+\d{1,2}\s+[\d:]+/);
+    if (match) return parseInt(match[1], 10);
+  } catch {}
+  return 0;
+}
+
+/**
+ * Polls progress on a 500ms interval by calling getProgressFn().
+ * getProgressFn may be async. Overlapping calls are skipped.
+ * Returns a stop function that cancels the interval.
+ */
+function startProgressPolling(getProgressFn, onProgress) {
+  let busy = false;
+  const id = setInterval(async () => {
+    if (busy) return;
+    busy = true;
+    try {
+      const progress = await getProgressFn();
+      if (progress !== null && onProgress) onProgress(progress);
+    } catch {}
+    busy = false;
+  }, 250);
+  return () => clearInterval(id);
+}
 
 async function listDirectory(deviceId, remotePath) {
   validateDeviceId(deviceId);
@@ -56,18 +103,29 @@ async function listDirectory(deviceId, remotePath) {
 
 /**
  * Parses ADB push/pull progress output.
- * Example: [ 15%] /sdcard/file.bin: 15/100 MB
+ * ADB outputs lines like:
+ *   [ 15%] /sdcard/file.bin                          (percent only)
+ *   [ 15%] /sdcard/file.bin: 15.98/100.0 MB          (with transfer size)
  */
 function parseTransferLine(line) {
-  // Pattern for percentage and bytes/total
-  // e.g. [ 15%] /remote/path: 12345/67890
-  const match = line.match(/\[\s*(\d+)%\]\s+.*:\s+([\d.]+)\/([\d.]+)\s+(\w+)/);
-  if (match) {
+  // With transfer size: [ 15%] /path: 15.98/100.0 MB
+  const fullMatch = line.match(/\[\s*(\d+)%\]\s+.*:\s+([\d.]+)\/([\d.]+)\s+(\w+)/);
+  if (fullMatch) {
     return {
-      percent: parseInt(match[1], 10),
-      current: match[2],
-      total: match[3],
-      unit: match[4]
+      percent: parseInt(fullMatch[1], 10),
+      current: fullMatch[2],
+      total: fullMatch[3],
+      unit: fullMatch[4]
+    };
+  }
+  // Percent only: [ 15%] /path
+  const pctMatch = line.match(/\[\s*(\d+)%\]/);
+  if (pctMatch) {
+    return {
+      percent: parseInt(pctMatch[1], 10),
+      current: null,
+      total: null,
+      unit: null
     };
   }
   return null;
@@ -89,15 +147,36 @@ async function pushFile(deviceId, localPath, remotePath, onProgress) {
     throw new Error('Remote path must start with / (e.g., /sdcard/Download/)');
   }
 
-  return spawnAdbWithInactivityTimeout(['-s', deviceId, 'push', localPath, remotePath], 60000, (str) => {
-    if (onProgress) {
-      const progress = parseTransferLine(str);
-      if (progress) onProgress(progress);
+  // ADB suppresses [XX%] progress when stderr is a pipe (not a TTY).
+  // Instead, poll the remote file size and compare against the known local size.
+  let stopPolling = null;
+  if (onProgress) {
+    let localSize = 0;
+    try {
+      const stat = fs.statSync(localPath);
+      if (stat.isFile()) localSize = stat.size;
+    } catch {}
+
+    if (localSize > 0) {
+      const fileName = path.basename(localPath);
+      const remoteFilePath = remotePath.endsWith('/') ? `${remotePath}${fileName}` : remotePath;
+      stopPolling = startProgressPolling(async () => {
+        const remoteSize = await getRemoteFileSize(deviceId, remoteFilePath);
+        const percent = Math.floor(remoteSize / localSize * 100);
+        if (percent <= 0) return null;
+        return { percent: Math.min(99, percent), current: null, total: null, unit: null };
+      }, onProgress);
     }
-  });
+  }
+
+  try {
+    return await spawnAdbWithInactivityTimeout(['-s', deviceId, 'push', localPath, remotePath], 60000);
+  } finally {
+    if (stopPolling) stopPolling();
+  }
 }
 
-async function pullFile(deviceId, remotePath, localPath, onProgress) {
+async function pullFile(deviceId, remotePath, localPath, onProgress, knownTotalSize = 0) {
   validateDeviceId(deviceId);
 
   if (!remotePath || typeof remotePath !== 'string' || !remotePath.startsWith('/')) {
@@ -107,12 +186,32 @@ async function pullFile(deviceId, remotePath, localPath, onProgress) {
     throw new Error('Local destination path cannot be empty');
   }
 
-  return spawnAdbWithInactivityTimeout(['-s', deviceId, 'pull', remotePath, localPath], 60000, (str) => {
-    if (onProgress) {
-      const progress = parseTransferLine(str);
-      if (progress) onProgress(progress);
+  // ADB suppresses [XX%] progress when stderr is a pipe (not a TTY).
+  // Instead, use the known file size (passed from listDirectory) or query it,
+  // then poll the local destination file size as it grows.
+  let stopPolling = null;
+  if (onProgress) {
+    const totalSize = knownTotalSize > 0 ? knownTotalSize : await getRemoteFileSize(deviceId, remotePath);
+    if (totalSize > 0) {
+      const localFilePath = path.join(localPath, path.basename(remotePath));
+      stopPolling = startProgressPolling(() => {
+        try {
+          const { size } = fs.statSync(localFilePath);
+          const percent = Math.floor(size / totalSize * 100);
+          if (percent <= 0) return null;
+          return { percent: Math.min(99, percent), current: null, total: null, unit: null };
+        } catch {
+          return null;
+        }
+      }, onProgress);
     }
-  });
+  }
+
+  try {
+    return await spawnAdbWithInactivityTimeout(['-s', deviceId, 'pull', remotePath, localPath], 60000);
+  } finally {
+    if (stopPolling) stopPolling();
+  }
 }
 
 async function makeDirectory(deviceId, remotePath) {
@@ -177,6 +276,7 @@ async function renameEntry(deviceId, remotePath, newName) {
 }
 
 module.exports = {
+  parseTransferLine,
   listDirectory,
   pushFile,
   pullFile,

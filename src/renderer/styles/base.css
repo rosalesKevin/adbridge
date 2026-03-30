@@ -5,6 +5,10 @@
   box-sizing: border-box;
 }
 
+.hidden {
+  display: none !important;
+}
+
 :root {
   --bg-dark: #0e1014;
   --bg-panel: #171b24;

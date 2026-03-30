@@ -114,14 +114,22 @@ async function handleWirelessBtn() {
     dom.wirelessBtn.disabled = true;
     appendLog(`Getting IP address for ${deviceId}...`);
     const ipResult = await window.adb.getDeviceIp(deviceId);
-    dom.wirelessBtn.disabled = false;
 
     if (!ipResult.success || !ipResult.data) {
+      dom.wirelessBtn.disabled = false;
       appendLog('Could not determine device IP. Ensure the device is connected to Wi-Fi.');
       return;
     }
 
     const ip = ipResult.data;
+    const networkResult = await window.adb.checkSameNetwork(ip);
+    dom.wirelessBtn.disabled = false;
+
+    if (!networkResult.success || !networkResult.data.sameNetwork) {
+      appendLog(`Cannot enable wireless ADB: device (${ip}) is not on the same network as this PC. Connect both to the same Wi-Fi network and try again.`);
+      return;
+    }
+
     const confirmed = await showConfirmDialog({
       title: 'Set up wireless ADB',
       message: `Enable wireless ADB debugging?\n\nDevice: ${deviceId}\nIP Address: ${ip}\nPort: 5555\n\nThe device will switch to TCP/IP mode and connect wirelessly on ${ip}:5555.\n\nKeep the USB cable connected until the wireless link is confirmed.`,
