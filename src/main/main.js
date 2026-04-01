@@ -35,12 +35,21 @@ function createWindow() {
         title: 'ADBridge',
         icon: iconPath,
         backgroundColor: '#1a1a2e',
+        show: false, // prevent partial icon render on first portable launch
         webPreferences: {
             preload: path.join(__dirname, '..', 'preload', 'preload.js'),
             contextIsolation: true,
             nodeIntegration: false,
             sandbox: false // needed for preload to use require
         }
+    });
+
+    // Re-assert icon and show window once fully initialised.
+    // On first portable launch Windows reads the icon from a fresh temp path;
+    // waiting for ready-to-show ensures the icon cache is warm before display.
+    win.once('ready-to-show', () => {
+        win.setIcon(iconPath);
+        win.show();
     });
 
     // Remove the default menu bar
