@@ -1,12 +1,12 @@
 {
   "name": "adbridge",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Android device management via ADB",
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node tests/updater.test.js && node tests/manual-updater.test.js && node tests/app-info.test.js && node tests/runner.test.js && node tests/device.test.js && node tests/files.test.js && node tests/packages.test.js && node tests/adb-routes.test.js && node tests/explorer-action-state.test.mjs && node tests/explorer-rename.test.mjs && node tests/version-placement.test.js && node tests/explorer-go-removal.test.js && node tests/build-config.test.js",
-    "build": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win portable",
+    "test": "node tests/updater.test.js && node tests/manual-updater.test.js && node tests/app-info.test.js && node tests/runner.test.js && node tests/device.test.js && node tests/files.test.js && node tests/packages.test.js && node tests/adb-routes.test.js && node tests/runtime-paths.test.js && node tests/explorer-action-state.test.mjs && node tests/explorer-rename.test.mjs && node tests/version-placement.test.js && node tests/explorer-go-removal.test.js && node tests/build-config.test.js",
+    "build": "npm run build:dir",
     "build:dir": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win dir"
   },
   "devDependencies": {
@@ -18,6 +18,9 @@
   "build": {
     "appId": "com.adbridge.app",
     "productName": "ADBridge",
+    "electronLanguages": [
+      "en-US"
+    ],
     "directories": {
       "output": "dist"
     },
@@ -25,7 +28,7 @@
       "icon": "assets/icon.ico",
       "target": [
         {
-          "target": "portable",
+          "target": "dir",
           "arch": [
             "x64"
           ]
@@ -33,15 +36,12 @@
       ],
       "signAndEditExecutable": false
     },
-    "portable": {
-      "artifactName": "ADBridge.exe"
-    },
     "afterPack": "scripts/after-pack.js",
     "files": [
       "src/**/*",
       "assets/icon.ico"
     ],
-    "extraResources": [
+    "extraFiles": [
       {
         "from": "vendor/scrcpy",
         "to": "scrcpy",
@@ -49,6 +49,12 @@
           "**/*"
         ]
       },
+      {
+        "from": "build/README.txt",
+        "to": "README.txt"
+      }
+    ],
+    "extraResources": [
       {
         "from": "assets/icon.ico",
         "to": "icon.ico"

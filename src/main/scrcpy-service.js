@@ -3,22 +3,34 @@
 const { spawn } = require('node:child_process');
 const path = require('node:path');
 const fs = require('node:fs');
-const { app } = require('electron');
 const { validateDeviceId } = require('./adb-service');
-
-// ── Path Resolution ──
-// In packaged app: process.resourcesPath/scrcpy/
-// In dev: project-root/vendor/scrcpy/
-const SCRCPY_DIR = app.isPackaged
-  ? path.join(process.resourcesPath, 'scrcpy')
-  : path.join(__dirname, '..', '..', 'vendor', 'scrcpy');
-
-const SCRCPY_EXE = path.join(SCRCPY_DIR, 'scrcpy.exe');
+const { resolveToolPath, buildMissingToolMessage } = require('./runtime-paths');
 
 // ── Process Registry ──
 // Maps deviceId → ChildProcess for all active mirrors
 /** @type {Map<string, import('node:child_process').ChildProcess>} */
 const runningProcesses = new Map();
+
+function getScrcpyExecutableForTest({
+  execPath = process.execPath,
+  resourcesPath = process.resourcesPath,
+  existsSync = fs.existsSync
+} = {}) {
+  const expectedPath = path.join(path.dirname(execPath), 'scrcpy', 'scrcpy.exe');
+  const devBaseDir = path.join(__dirname, '..', '..', 'vendor', 'scrcpy');
+  const resolved = resolveToolPath({
+    toolName: 'scrcpy.exe',
+    execPath,
+    resourcesPath,
+    devBaseDir,
+    existsSync
+  });
+
+  return {
+    resolved,
+    expectedPath
+  };
+}
 
 /**
  * Start mirroring a device. Spawns scrcpy as a long-lived child process.
@@ -36,10 +48,15 @@ function startMirror(deviceId, onEvent) {
     return { success: false, error: 'Mirror already running for this device' };
   }
 
-  if (!fs.existsSync(SCRCPY_EXE)) {
+  const { resolved: scrcpyExe, expectedPath } = getScrcpyExecutableForTest();
+
+  if (!scrcpyExe) {
     return {
       success: false,
-      error: `scrcpy not found at: ${SCRCPY_EXE}\n\nThis is usually caused by Windows Defender or antivirus quarantining scrcpy.exe after extraction. Check Windows Security → Protection History and restore the file, or add an exclusion for the ADBridge folder.`
+      error: buildMissingToolMessage({
+        toolName: 'scrcpy.exe',
+        expectedPath
+      })
     };
   }
 
@@ -47,9 +64,10 @@ function startMirror(deviceId, onEvent) {
   // --serial: target specific device (like adb -s <id>)
   // --no-audio: prevents errors on devices without audio forwarding support
   const args = ['--serial', deviceId, '--no-audio'];
+  const scrcpyDir = path.dirname(scrcpyExe);
 
-  const proc = spawn(SCRCPY_EXE, args, {
-    cwd: SCRCPY_DIR,       // CRITICAL: scrcpy loads DLLs from CWD on Windows
+  const proc = spawn(scrcpyExe, args, {
+    cwd: scrcpyDir,        // CRITICAL: scrcpy loads DLLs from CWD on Windows
     stdio: 'ignore',       // no stdout/stderr piping — avoids buffer bloat
     detached: false,       // child dies with parent
     windowsHide: false     // scrcpy creates its own SDL window — must be visible
@@ -109,6 +127,7 @@ function stopAllMirrors() {
 }
 
 module.exports = {
+  getScrcpyExecutableForTest,
   startMirror,
   stopMirror,
   isMirrorRunning,

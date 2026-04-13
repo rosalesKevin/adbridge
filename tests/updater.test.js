@@ -46,4 +46,12 @@ assert.equal(isNewer(v('1.2.2'), v('1.2.3')), false, 'older patch is not newer')
 assert.equal(isNewer(v('1.1.9'), v('1.2.0')), false, 'older minor is not newer');
 assert.equal(isNewer(v('0.9.9'), v('1.0.0')), false, 'older major is not newer');
 
+// ── release asset name pattern ────────────────────────────────────────────────
+const assetPattern = /^ADBridge-v\d+\.\d+\.\d+\.zip$/;
+assert.equal(assetPattern.test('ADBridge-v1.2.2.zip'),    true,  'versioned zip matches');
+assert.equal(assetPattern.test('ADBridge-v10.0.1.zip'),   true,  'multi-digit version matches');
+assert.equal(assetPattern.test('ADBridge-win-x64.zip'),   false, 'old fixed name does not match');
+assert.equal(assetPattern.test('ADBridge.exe'),           false, 'bare exe does not match');
+assert.equal(assetPattern.test('ADBridge-v1.2.2-beta.zip'), false, 'pre-release zip does not match');
+
 console.log('All tests passed.');

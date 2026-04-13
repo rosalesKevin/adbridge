@@ -58,7 +58,7 @@ function fetchLatestRelease(timeoutMs) {
         res.on('end', () => {
           try {
             const data = JSON.parse(body);
-            const asset = (data.assets || []).find(a => a.name === 'ADBridge.exe');
+            const asset = (data.assets || []).find(a => /^ADBridge-v\d+\.\d+\.\d+\.zip$/.test(a.name));
             if (!asset) return resolve(null);
             resolve({
               tagName: data.tag_name || '',

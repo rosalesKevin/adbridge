@@ -104,6 +104,7 @@ async function startLogcat() {
   if (!result.success) {
     appendLog(`Logcat: ${result.error}`);
     if (unsubscribeData) { unsubscribeData(); unsubscribeData = null; }
+    if (unsubscribeError) { unsubscribeError(); unsubscribeError = null; }
     return;
   }
 

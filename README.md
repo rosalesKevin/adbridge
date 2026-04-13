@@ -34,19 +34,29 @@ npm install
 npm start
 ```
 
-## Download Portable EXE
+## Download Windows Zip
 
-If you just want to use ADBridge, download the latest portable `ADBridge.exe` from the GitHub Releases page:
+If you just want to use ADBridge, download the latest `ADBridge-win-x64.zip` from the GitHub Releases page:
 
 https://github.com/rosalesKevin/adbridge/releases
 
-## Build Portable EXE
+`v1.2.1` was removed because its Windows self-update flow could leave the portable app unusable after updating. If you ever downloaded `v1.2.1`, replace it manually with the current release zip.
+
+Extract the zip to a writable folder and run `ADBridge.exe` from the extracted folder. Keep `ADBridge.exe` and the bundled `scrcpy` folder together.
+
+ADBridge now only notifies you when a newer release exists and opens the GitHub release page. To update, download the new release zip, extract it, and replace your existing app folder.
+
+## Build Windows Zip
 
 ```bash
 npm run build
 ```
 
-Output: `dist/ADBridge.exe` (portable, no installer).
+Output:
+
+- `dist/win-unpacked/`
+- `dist/ADBridge-win-x64/`
+- `dist/ADBridge-win-x64.zip`
 
 ## Third-party licenses
 
