@@ -50,6 +50,17 @@
         ]
       },
       {
+        "from": "vendor/LICENSES",
+        "to": "LICENSES",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "docs/THIRD_PARTY_LICENSES.md",
+        "to": "THIRD_PARTY_LICENSES.md"
+      },
+      {
         "from": "build/README.txt",
         "to": "README.txt"
       }

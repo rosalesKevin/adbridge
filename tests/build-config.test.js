@@ -34,9 +34,11 @@ test('windows build copies scrcpy beside the app executable via extraFiles', () 
     packageJson.build?.extraFiles,
     [
       { from: 'vendor/scrcpy', to: 'scrcpy', filter: ['**/*'] },
+      { from: 'vendor/LICENSES', to: 'LICENSES', filter: ['**/*'] },
+      { from: 'docs/THIRD_PARTY_LICENSES.md', to: 'THIRD_PARTY_LICENSES.md' },
       { from: 'build/README.txt', to: 'README.txt' }
     ],
-    'release folder should contain a sibling scrcpy directory and top-level README.txt'
+    'release folder should contain a sibling scrcpy directory, bundled license attributions, and top-level README.txt'
   );
 });
 

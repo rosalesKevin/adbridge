@@ -50,6 +50,14 @@ To create a release zip, rename `dist/win-unpacked/` to `dist/ADBridge-v<version
 
 ## Third-party licenses
 
-ADBridge bundles [scrcpy](https://github.com/Genymobile/scrcpy) (Apache 2.0).
+ADBridge bundles the following open-source components. Full license and
+NOTICE texts ship inside the release zip at `LICENSES/`, and a full
+inventory is in [`docs/THIRD_PARTY_LICENSES.md`](docs/THIRD_PARTY_LICENSES.md).
 
-ADBridge bundles [Android Platform Tools](https://developer.android.com/tools/releases/platform-tools) (ADB) by Google, subject to the [Android Software Development Kit License Agreement](https://developer.android.com/studio/terms).
+- [scrcpy](https://github.com/Genymobile/scrcpy) — © Genymobile / Romain Vimont, Apache 2.0
+- [Android Platform-Tools](https://developer.android.com/tools/releases/platform-tools) (`adb.exe`, `AdbWinApi.dll`, `AdbWinUsbApi.dll`) — © The Android Open Source Project, Apache 2.0
+
+The platform-tools binaries are unmodified copies of Google's official
+release. Redistribution is permitted under Apache 2.0 via §3.5 of the
+[Android SDK License Agreement](https://developer.android.com/studio/terms),
+which defers to the upstream open-source license for AOSP components.
