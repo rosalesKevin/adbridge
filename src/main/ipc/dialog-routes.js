@@ -95,23 +95,6 @@ function registerDialogHandlers(ipcMain, dialog) {
     }
   });
 
-  ipcMain.handle('dialog:confirm', async (_event, title, message) => {
-    try {
-      const result = await dialog.showMessageBox({
-        type: 'warning',
-        title,
-        message,
-        buttons: ['Cancel', 'Confirm'],
-        defaultId: 0,
-        cancelId: 0
-      });
-
-      return { success: true, data: result.response === 1 };
-    } catch (err) {
-      return { success: false, error: err.message };
-    }
-  });
-
   ipcMain.handle('logcat:save', async (_event, content, defaultName) => {
     try {
       const result = await dialog.showSaveDialog({

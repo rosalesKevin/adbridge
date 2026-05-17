@@ -230,13 +230,14 @@ export async function refreshDevices({ silent = false, onNoDevices, onDeviceSele
     currentDevices = result.data;
   }
 
-  // Detect devices that just appeared
+  // Detect devices that just appeared or disappeared
   const currentIds = new Set(currentDevices.map((d) => d.id));
   const newlyConnected = currentDevices.filter((d) => d.status === 'device' && !knownDeviceIds.has(d.id));
+  const devicesChanged = currentIds.size !== knownDeviceIds.size || [...currentIds].some((id) => !knownDeviceIds.has(id));
   knownDeviceIds = currentIds;
   lastDevices = currentDevices;
 
-  await refreshMirrorStatuses(currentDevices);
+  if (devicesChanged) await refreshMirrorStatuses(currentDevices);
 
   // Repopulate dropdown
   dom.deviceSelect.innerHTML = '';
@@ -312,19 +313,19 @@ export function initDevices(callbacks) {
 
   if (typeof window.adb.onDevicesChanged === 'function') {
     let debounceTimer = null;
-    window.adb.onDevicesChanged(() => {
+    window.adb.onDevicesChanged((devices) => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
-        void refreshDevices({ ...storedCallbacks, silent: true });
+        void refreshDevices({ ...storedCallbacks, silent: true, devices });
       }, 300);
     });
   }
 
   // Polling fallback: adb track-devices is unreliable for USB on Windows.
-  // Poll every 3 s to catch connect/disconnect events the tracker misses.
+  // Poll every 5 s to catch connect/disconnect events the tracker misses.
   setInterval(() => {
     void refreshDevices({ ...storedCallbacks, silent: true });
-  }, 3000);
+  }, 5000);
 
   if (hasScrcpyApi() && typeof window.scrcpy.onStatusChange === 'function') {
     window.scrcpy.onStatusChange((payload) => {

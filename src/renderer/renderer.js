@@ -30,7 +30,6 @@ async function onDeviceSelected(device) {
   void stopLogcatIfRunning();
   void loadDeviceInfo(device.id);
   await loadPackages();
-  refreshLogcatAppList();
   handleDeviceSelectedForExplorer();
 }
 

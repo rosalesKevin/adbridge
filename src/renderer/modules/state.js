@@ -4,7 +4,6 @@ export const state = {
   selectedApkPath: null,
   allPackages: [],
   busy: false,
-  autoRefreshTimerId: null,
   explorerPath: '/sdcard/',
   explorerEntries: [],
   explorerSelectedItems: [],

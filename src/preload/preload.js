@@ -120,9 +120,6 @@ contextBridge.exposeInMainWorld('dialogs', {
     /** Open native file picker for .apk files → { success, data: string|null } */
     pickApk: () => ipcRenderer.invoke('dialog:open-apk'),
 
-    /** Show a native confirmation dialog → { success, data: boolean } */
-    confirm: (title, message) => ipcRenderer.invoke('dialog:confirm', title, message),
-
     /** Open native file picker for any file → { success, data: string|null } */
     pickFile: () => ipcRenderer.invoke('dialog:open-file'),
 
