@@ -49,7 +49,7 @@ function spawnAdb(args) {
  * This is ideal for long transfers that might take minutes/hours but should
  * never be idle for too long.
  */
-function spawnAdbWithInactivityTimeout(args, inactivityTimeoutMs = 30000, onData) {
+function spawnAdbWithInactivityTimeout(args, inactivityTimeoutMs = 30000, onData, activityRef = null) {
   return new Promise((resolve, reject) => {
     const child = spawn(getAdbExe(), args);
     activeTransferProcess = child;
@@ -68,6 +68,8 @@ function spawnAdbWithInactivityTimeout(args, inactivityTimeoutMs = 30000, onData
         }, inactivityTimeoutMs);
       }
     };
+
+    if (activityRef) activityRef.reset = resetTimeout;
 
     resetTimeout();
 

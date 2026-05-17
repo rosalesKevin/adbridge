@@ -149,6 +149,7 @@ async function pushFile(deviceId, localPath, remotePath, onProgress) {
 
   // ADB suppresses [XX%] progress when stderr is a pipe (not a TTY).
   // Instead, poll the remote file size and compare against the known local size.
+  const activityRef = {};
   let stopPolling = null;
   if (onProgress) {
     let localSize = 0;
@@ -164,13 +165,14 @@ async function pushFile(deviceId, localPath, remotePath, onProgress) {
         const remoteSize = await getRemoteFileSize(deviceId, remoteFilePath);
         const percent = Math.floor(remoteSize / localSize * 100);
         if (percent <= 0) return null;
+        activityRef.reset?.();
         return { percent: Math.min(99, percent), current: null, total: null, unit: null };
       }, onProgress);
     }
   }
 
   try {
-    return await spawnAdbWithInactivityTimeout(['-s', deviceId, 'push', localPath, remotePath], 60000);
+    return await spawnAdbWithInactivityTimeout(['-s', deviceId, 'push', localPath, remotePath], 120000, undefined, activityRef);
   } finally {
     if (stopPolling) stopPolling();
   }
@@ -189,6 +191,7 @@ async function pullFile(deviceId, remotePath, localPath, onProgress, knownTotalS
   // ADB suppresses [XX%] progress when stderr is a pipe (not a TTY).
   // Instead, use the known file size (passed from listDirectory) or query it,
   // then poll the local destination file size as it grows.
+  const activityRef = {};
   let stopPolling = null;
   if (onProgress) {
     const totalSize = knownTotalSize > 0 ? knownTotalSize : await getRemoteFileSize(deviceId, remotePath);
@@ -199,6 +202,7 @@ async function pullFile(deviceId, remotePath, localPath, onProgress, knownTotalS
           const { size } = fs.statSync(localFilePath);
           const percent = Math.floor(size / totalSize * 100);
           if (percent <= 0) return null;
+          activityRef.reset?.();
           return { percent: Math.min(99, percent), current: null, total: null, unit: null };
         } catch {
           return null;
@@ -208,7 +212,7 @@ async function pullFile(deviceId, remotePath, localPath, onProgress, knownTotalS
   }
 
   try {
-    return await spawnAdbWithInactivityTimeout(['-s', deviceId, 'pull', remotePath, localPath], 60000);
+    return await spawnAdbWithInactivityTimeout(['-s', deviceId, 'pull', remotePath, localPath], 120000, undefined, activityRef);
   } finally {
     if (stopPolling) stopPolling();
   }
