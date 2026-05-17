@@ -8,6 +8,16 @@ import { getIcon } from './icons.js';
 import { getExplorerActionState } from './explorer-action-state.mjs';
 import { renameSingleExplorerSelection } from './explorer-rename.mjs';
 
+function formatElapsed(ms) {
+  const totalSec = ms / 1000;
+  if (totalSec < 60) return `${totalSec.toFixed(1)}s`;
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = Math.floor(totalSec % 60);
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  return `${m}m ${s}s`;
+}
+
 export function clearExplorer() {
   state.explorerPath = '/sdcard/';
   state.explorerEntries = [];
@@ -75,7 +85,7 @@ function hideTransferProgress() {
 }
 
 function renderTransferProgress(label, progress, startTime) {
-  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  const elapsed = formatElapsed(Date.now() - startTime);
   const percent = progress.percent || 0;
 
   const detail = (progress.current && progress.total && progress.unit)
@@ -85,7 +95,7 @@ function renderTransferProgress(label, progress, startTime) {
   dom.explorerStatus.innerHTML = `
     <span class="explorer-transfer-status">
       <span class="explorer-transfer-spinner"></span>
-      ${label}: ${percent}%${detail} • ${elapsed}s
+      ${label}: ${percent}%${detail} • ${elapsed}
     </span>
   `;
   showTransferProgress(percent);
@@ -277,8 +287,8 @@ async function explorerPush() {
   try {
     const result = await window.adb.push(state.selectedDeviceId, picked.data, state.explorerPath);
     if (result.success) {
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-      appendLog(`Push result: ${result.data} (took ${elapsed}s)`);
+      const elapsed = formatElapsed(Date.now() - startTime);
+      appendLog(`Push result: ${result.data} (took ${elapsed})`);
       await explorerNavigate(state.explorerPath);
     } else if (result.error === 'Transfer cancelled') {
       appendLog('Upload cancelled.');
@@ -316,8 +326,8 @@ async function explorerPushFolder() {
   try {
     const result = await window.adb.push(state.selectedDeviceId, picked.data, state.explorerPath);
     if (result.success) {
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-      appendLog(`Push folder result: ${result.data} (took ${elapsed}s)`);
+      const elapsed = formatElapsed(Date.now() - startTime);
+      appendLog(`Push folder result: ${result.data} (took ${elapsed})`);
       await explorerNavigate(state.explorerPath);
     } else if (result.error === 'Transfer cancelled') {
       appendLog('Upload cancelled.');
@@ -469,9 +479,9 @@ async function explorerPull() {
 
     try {
       const result = await window.adb.pull(state.selectedDeviceId, remotePath, destDir, entry.size ?? 0);
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      const elapsed = formatElapsed(Date.now() - startTime);
       if (result.success) {
-        appendLog(`Pull result: ${entry.name} (took ${elapsed}s)`);
+        appendLog(`Pull result: ${entry.name} (took ${elapsed})`);
         successCount++;
       } else if (result.error === 'Transfer cancelled') {
         wasCancelled = true;
