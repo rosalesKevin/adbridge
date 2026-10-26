@@ -1,6 +1,6 @@
 <p align="center"><img width="400" alt="ADBridge" src="docs/logo.png" /></p>
 
-# ADBridge v1.2.4
+# ADBridge v1.3.0
 
 ADBridge is the swiss knife of ADB: a desktop UI that simplifies day-to-day ADB usage.
 
