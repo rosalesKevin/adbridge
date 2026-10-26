@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 /**
  * SECURITY: contextBridge exposes only specific IPC invoke calls.
@@ -32,8 +32,14 @@ contextBridge.exposeInMainWorld('adb', {
     /** Clear app data → { success, data: string } */
     clear: (deviceId, packageName) => ipcRenderer.invoke('adb:clear', deviceId, packageName),
 
+    /** Grant every requested runtime permission → { success, data: { granted: string[], skipped: string[] } } */
+    grantPermissions: (deviceId, packageName) => ipcRenderer.invoke('adb:grant-permissions', deviceId, packageName),
+
+    /** Package lastUpdateTime, or null if not installed → { success, data: string|null } */
+    packageUpdateTime: (deviceId, packageName) => ipcRenderer.invoke('adb:package-update-time', deviceId, packageName),
+
     /** Install an APK → { success, data: string } */
-    install: (deviceId, apkPath) => ipcRenderer.invoke('adb:install', deviceId, apkPath),
+    install: (deviceId, apkPath, options) => ipcRenderer.invoke('adb:install', deviceId, apkPath, options),
 
     /** Push a local file to the device → { success, data: string } */
     push: (deviceId, localPath, remotePath) => ipcRenderer.invoke('adb:push', deviceId, localPath, remotePath),
@@ -46,6 +52,9 @@ contextBridge.exposeInMainWorld('adb', {
 
     /** Get device info (model, Android version, battery, memory) → { success, data: {...} } */
     deviceInfo: (deviceId) => ipcRenderer.invoke('adb:device-info', deviceId),
+
+    /** Friendly device name (settings name → marketing name → model) → { success, data: string|null } */
+    deviceName: (deviceId) => ipcRenderer.invoke('adb:device-name', deviceId),
 
     /** Get device Wi-Fi IP address → { success, data: string|null } */
     getDeviceIp: (deviceId) => ipcRenderer.invoke('adb:get-ip', deviceId),
@@ -65,6 +74,16 @@ contextBridge.exposeInMainWorld('adb', {
     /** Rename a file or folder on the device → { success, data: string } */
     rename: (deviceId, remotePath, newName) => ipcRenderer.invoke('adb:rename', deviceId, remotePath, newName),
 
+    /** Copy / move a device item into another device folder → { success, data } (fails if the name exists) */
+    copy: (deviceId, srcPath, destDir) => ipcRenderer.invoke('adb:copy', deviceId, srcPath, destDir),
+    move: (deviceId, srcPath, destDir) => ipcRenderer.invoke('adb:move', deviceId, srcPath, destDir),
+
+    /** File properties → { success, data: { type, size, permissions, owner, group, modified } } */
+    stat: (deviceId, remotePath) => ipcRenderer.invoke('adb:stat', deviceId, remotePath),
+
+    /** Pull to a temp folder and open with the default app (executables are only revealed) → { success, data: { opened, localPath } } */
+    openOnPc: (deviceId, remotePath) => ipcRenderer.invoke('adb:open-on-pc', deviceId, remotePath),
+
     /** Cancel the active push/pull transfer → { success, data: boolean } */
     cancelTransfer: () => ipcRenderer.invoke('adb:cancel-transfer'),
 
@@ -80,7 +99,7 @@ contextBridge.exposeInMainWorld('adb', {
 });
 
 contextBridge.exposeInMainWorld('scrcpy', {
-    start: (deviceId) => ipcRenderer.invoke('scrcpy:start', deviceId),
+    start: (deviceId, options) => ipcRenderer.invoke('scrcpy:start', deviceId, options),
     stop: (deviceId) => ipcRenderer.invoke('scrcpy:stop', deviceId),
     status: (deviceId) => ipcRenderer.invoke('scrcpy:status', deviceId),
     onStatusChange: (callback) => {
@@ -95,8 +114,6 @@ contextBridge.exposeInMainWorld('logcat', {
         ipcRenderer.invoke('logcat:start', deviceId, packageName, tag, level),
 
     stop: (deviceId) => ipcRenderer.invoke('logcat:stop', deviceId),
-
-    status: (deviceId) => ipcRenderer.invoke('logcat:status', deviceId),
 
     /** Subscribe to incoming logcat lines. Returns an unsubscribe function. */
     onData: (callback) => {
@@ -131,6 +148,12 @@ contextBridge.exposeInMainWorld('dialogs', {
 
     /** Open native file picker for keystore files → { success, data: string|null } */
     pickKeystore: () => ipcRenderer.invoke('dialog:open-keystore'),
+
+    /** Names (from `names`) that already exist in local folder `dir` → { success, data: string[] } */
+    existingNames: (dir, names) => ipcRenderer.invoke('dialog:existing-names', dir, names),
+
+    /** Local path of a File dropped onto the window (Electron 32+ has no File.path) */
+    pathForFile: (file) => webUtils.getPathForFile(file),
 });
 
 contextBridge.exposeInMainWorld('appInfo', {

@@ -2,23 +2,8 @@
 
 const assert = require('node:assert/strict');
 
-// Inline the functions under test to avoid requiring Electron modules
-function parseVersion(raw) {
-  const cleaned = (raw || '').trim().replace(/^v/, '');
-  if (cleaned.includes('-')) return null;
-  const parts = cleaned.split('.');
-  if (parts.length !== 3) return null;
-  if (parts.some(p => p === '')) return null; // empty segment e.g. "1..3"
-  const nums = parts.map(Number);
-  if (nums.some(n => !Number.isInteger(n) || n < 0)) return null;
-  return { major: nums[0], minor: nums[1], patch: nums[2] };
-}
-
-function isNewer(a, b) {
-  if (a.major !== b.major) return a.major > b.major;
-  if (a.minor !== b.minor) return a.minor > b.minor;
-  return a.patch > b.patch;
-}
+// Under plain Node, require('electron') resolves to a path string, so the updater loads without Electron.
+const { parseVersion, isNewer } = require('../src/main/updater');
 
 // ── parseVersion ──────────────────────────────────────────────────────────────
 assert.deepEqual(parseVersion('1.2.3'),    { major: 1, minor: 2, patch: 3 }, 'bare semver');

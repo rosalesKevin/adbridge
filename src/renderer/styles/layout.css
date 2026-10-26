@@ -1,44 +1,69 @@
-/* Layout */
-.header-bar {
+/* Layout: sidebar + workspace (pane, status bar, log drawer) */
+.app-shell {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background: linear-gradient(135deg, #0c0f16, #141828);
-  border-bottom: 1px solid var(--border);
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: 228px;
   flex-shrink: 0;
-  -webkit-app-region: drag;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 10px 10px;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
 }
 
 .app-title {
   display: flex;
   align-items: baseline;
   gap: 8px;
+  padding: 0 4px;
   font-size: 16px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--title-text);
   letter-spacing: 0.3px;
-  -webkit-app-region: drag;
 }
 
-.header-center {
+.app-version {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 500;
+  user-select: text;
+}
+
+.device-card {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.device-card-head {
+  display: flex;
+  gap: 4px;
   align-items: center;
-  gap: 8px;
-  -webkit-app-region: no-drag;
 }
 
 .device-select {
+  flex: 1;
+  min-width: 0;
   background-color: var(--bg-input);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
   font-size: 12px;
   font-family: inherit;
+  font-weight: 500;
   cursor: pointer;
-  min-width: 180px;
-  max-width: 320px;
   outline: none;
   transition: border-color 0.15s;
 }
@@ -51,135 +76,135 @@
   color: var(--text-muted);
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  -webkit-app-region: no-drag;
+.device-card-head .btn-icon {
+  padding: 4px 7px;
 }
 
+/* device-info.js fills this with label/value rows */
 .device-info-bar {
-  display: flex;
-  align-items: center;
-  padding: 4px 14px;
-  background: var(--bg-panel);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  font-size: 11.5px;
-  color: var(--text-secondary);
-  flex-wrap: wrap;
-  gap: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 6px;
+  padding: 10px 2px 2px;
+  border-top: 1px solid var(--border-light);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
-.device-info-bar.hidden {
+.info-row {
+  display: contents;
+}
+
+.info-label {
+  color: var(--text-muted);
+}
+
+.info-value {
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: text;
+}
+
+.device-empty-hint {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+#deviceInfoBar:not(.hidden) ~ .device-empty-hint {
   display: none;
 }
 
-.info-chip {
-  white-space: nowrap;
-}
-
-.info-sep {
-  color: var(--text-muted);
-  padding: 0 8px;
-}
-
-.main-content {
-  display: flex;
-  flex: 1;
-  gap: 8px;
-  padding: 8px;
-  overflow: hidden;
-  min-height: 0;
-}
-
-.panel {
-  background-color: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.app-panel {
-  flex: 1;
-  min-width: 0;
-}
-
-.section-header {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  padding: 0 0 2px 0;
-}
-
-.sub-header {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  margin-bottom: 6px;
-}
-
-.app-count {
-  color: var(--text-muted);
-  font-size: 11px;
-}
-
-.app-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.section-divider {
-  border-top: 1px solid var(--border);
-  margin: 2px 0;
-  flex-shrink: 0;
-}
-
-.sub-section {
-  display: flex;
-  flex-direction: column;
+.device-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
 
-.tab-bar {
+.device-card-actions .btn {
+  padding: 5px 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-nav {
   display: flex;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  margin: -12px -12px 0;
-  padding: 0 4px;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
   background: transparent;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-radius: var(--radius);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 13px;
   font-family: inherit;
   font-weight: 500;
-  padding: 9px 14px;
+  text-align: left;
+  padding: 8px 10px;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-  margin-bottom: -1px;
+  transition: background-color 0.15s, color 0.15s;
   white-space: nowrap;
 }
 
 .tab-btn:hover:not(.active) {
+  background-color: var(--bg-hover);
   color: var(--text-primary);
 }
 
 .tab-btn.active {
+  background-color: var(--bg-selected);
   color: var(--accent);
-  border-bottom-color: var(--accent);
   font-weight: 600;
+}
+
+.nav-icon {
+  width: 16px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.sidebar-settings {
+  margin-top: auto;
+}
+
+.sidebar-resize-handle {
+  width: 5px;
+  margin-left: -3px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 5;
+  cursor: ew-resize;
+  transition: background-color 0.15s;
+}
+
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle.dragging {
+  background-color: var(--accent);
+}
+
+/* ── Workspace ───────────────────────────────────────────────────────────── */
+.workspace {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px 12px;
 }
 
 .tab-pane {
@@ -187,19 +212,74 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  gap: 8px;
-  padding-top: 10px;
+  gap: 10px;
 }
 
 .tab-pane.active {
   display: flex;
 }
 
+.pane-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 28px;
+}
+
+.pane-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pane-header-spacer {
+  flex: 1;
+}
+
+.pane-header .btn,
+.selection-bar .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-count {
+  color: var(--text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+.live-indicator::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--status-ok);
+}
+
+.live-indicator.paused {
+  color: var(--text-muted);
+}
+
+.live-indicator.paused::before {
+  background-color: var(--text-muted);
+}
+
+/* ── Status bar + log drawer ─────────────────────────────────────────────── */
 .log-resize-handle {
   flex-shrink: 0;
   height: 5px;
   cursor: ns-resize;
-  background: transparent;
   border-top: 1px solid var(--border);
   transition: background-color 0.15s;
 }
@@ -212,30 +292,90 @@
 
 .log-panel {
   flex-shrink: 0;
-  height: 165px;
-  min-height: 38px;
-  padding: 8px 12px 10px;
+  height: 200px;
+  min-height: 32px;
+  padding: 0 12px 10px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
+  background: var(--bg-panel);
 }
 
-.log-header-row {
+/* !important: beats the inline height set by drag-resize, which is restored on expand */
+.log-panel.collapsed {
+  height: auto !important;
+  padding-bottom: 0;
+  border-top: 1px solid var(--border);
+}
+
+.log-panel.collapsed .log-area {
+  display: none;
+}
+
+.status-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
+  height: 31px;
+  flex-shrink: 0;
+  font-size: 11.5px;
+}
+
+.log-last-line {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 11px;
 }
 
 .log-header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.app-version {
-  color: var(--text-muted);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  user-select: text;
+.log-panel.collapsed #clearLogBtn {
+  display: none;
+}
+
+.log-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 2px;
+}
+
+.log-toggle:hover {
+  color: var(--text-primary);
+}
+
+/* Minimized: "▴ Log" reopens the drawer */
+.log-panel.collapsed .log-toggle::before {
+  content: '▴';
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* Open: a minimize button styled like the Clear button beside it */
+.log-panel:not(.collapsed) .log-toggle {
+  background-color: var(--btn-muted-bg);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.log-panel:not(.collapsed) .log-toggle:hover {
+  background-color: var(--btn-muted-hover);
 }

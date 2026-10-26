@@ -9,10 +9,7 @@ let unsubscribeError = null;
 
 // ── App Dropdown ──
 
-/**
- * Repopulate the app selector from state.allPackages.
- * Call this after packages are loaded or when the logcat tab is shown.
- */
+/** Repopulate the app selector from state.allPackages (runs when the Logcat tab is shown). */
 export function refreshLogcatAppList() {
   const select = dom.logcatAppSelect;
   const currentVal = select.value;
@@ -34,18 +31,9 @@ export function refreshLogcatAppList() {
 
 // ── Line Rendering ──
 
-/**
- * Extract log level from a brief-format logcat line: "Level/Tag(PID): Message"
- * @param {string} line
- * @returns {string|null} V, D, I, W, E, F, or null
- */
-function parseLevel(line) {
-  const m = line.match(/^([VDIWEF])\//);
-  return m ? m[1] : null;
-}
-
 function appendLine(line) {
-  const level = parseLevel(line) || 'unknown';
+  // Brief format: "Level/Tag(PID): Message"
+  const level = line.match(/^([VDIWEF])\//)?.[1] ?? 'unknown';
   const span = document.createElement('span');
   span.className = `logcat-line logcat-level-${level}`;
   span.textContent = line;
@@ -72,11 +60,11 @@ function setRunning(running) {
   dom.logcatStartBtn.classList.toggle('btn-success', !running);
 }
 
-function getCurrentFilters() {
-  const tags = dom.logcatTagInput.value.trim();
-  const level = dom.logcatLevelSelect.value;
-  const levelText = dom.logcatLevelSelect.options[dom.logcatLevelSelect.selectedIndex].text;
-  return { tags, level, levelText };
+function unsubscribe() {
+  unsubscribeData?.();
+  unsubscribeError?.();
+  unsubscribeData = null;
+  unsubscribeError = null;
 }
 
 async function startLogcat() {
@@ -92,7 +80,9 @@ async function startLogcat() {
     return;
   }
 
-  const { tags, level, levelText } = getCurrentFilters();
+  const tags = dom.logcatTagInput.value.trim();
+  const level = dom.logcatLevelSelect.value;
+  const levelText = dom.logcatLevelSelect.options[dom.logcatLevelSelect.selectedIndex].text;
   const tagDisplay = tags ? ` tags=[${tags}]` : '';
   appendLog(`Logcat: starting for ${packageName} [level=${levelText}${tagDisplay}]`);
 
@@ -103,8 +93,7 @@ async function startLogcat() {
 
   if (!result.success) {
     appendLog(`Logcat: ${result.error}`);
-    if (unsubscribeData) { unsubscribeData(); unsubscribeData = null; }
-    if (unsubscribeError) { unsubscribeError(); unsubscribeError = null; }
+    unsubscribe();
     return;
   }
 
@@ -112,8 +101,7 @@ async function startLogcat() {
 }
 
 async function stopLogcat(silent = false) {
-  if (unsubscribeData) { unsubscribeData(); unsubscribeData = null; }
-  if (unsubscribeError) { unsubscribeError(); unsubscribeError = null; }
+  unsubscribe();
 
   const deviceId = state.selectedDeviceId;
   if (!deviceId) { setRunning(false); return; }
@@ -130,10 +118,6 @@ async function stopLogcat(silent = false) {
   setRunning(false);
 }
 
-/**
- * Restart logcat with current filter values. Called when level or tags change
- * while a stream is already running.
- */
 async function restartLogcat() {
   if (!state.logcatRunning) return;
   appendLog('Logcat: restarting with new filters...');
@@ -141,9 +125,6 @@ async function restartLogcat() {
   await startLogcat();
 }
 
-/**
- * Stop logcat if currently running. Called when device selection changes.
- */
 export async function stopLogcatIfRunning() {
   if (state.logcatRunning) {
     await stopLogcat();

@@ -6,21 +6,30 @@ export function setBusy(isBusy) {
   state.busy = isBusy;
   dom.refreshDevicesBtn.disabled = isBusy;
   dom.browseBtn.disabled = isBusy;
-  dom.installBtn.disabled = isBusy || !state.selectedApkPath;
+  dom.installBtn.disabled = isBusy;
+  dom.appsRefreshBtn.disabled = isBusy;
   dom.uninstallBtn.disabled = isBusy || !state.selectedPackage;
   dom.clearDataBtn.disabled = isBusy || !state.selectedPackage;
-  const explorerActionState = getExplorerActionState({
-    busy: isBusy,
+  dom.grantPermsBtn.disabled = isBusy || !state.selectedPackage;
+  updateExplorerActionButtons();
+  dom.explorerUpBtn.disabled = isBusy;
+  dom.explorerRefreshBtn.disabled = isBusy;
+}
+
+export function updateExplorerActionButtons() {
+  const actionState = getExplorerActionState({
+    busy: state.busy,
     hasDevice: Boolean(state.selectedDeviceId),
     selectedCount: state.explorerSelectedItems.length
   });
-  dom.explorerPushBtn.disabled = explorerActionState.pushDisabled;
-  dom.explorerPushFolderBtn.disabled = explorerActionState.pushFolderDisabled;
-  dom.explorerPullBtn.disabled = explorerActionState.pullDisabled;
-  dom.explorerRenameBtn.disabled = explorerActionState.renameDisabled;
-  dom.explorerDeleteBtn.disabled = explorerActionState.deleteDisabled;
-  dom.explorerUpBtn.disabled = isBusy;
-  dom.explorerRefreshBtn.disabled = isBusy;
+  dom.explorerPushBtn.disabled = actionState.pushDisabled;
+  dom.explorerPushFolderBtn.disabled = actionState.pushFolderDisabled;
+  dom.explorerPullBtn.disabled = actionState.pullDisabled;
+  dom.explorerRenameBtn.disabled = actionState.renameDisabled;
+  dom.explorerDeleteBtn.disabled = actionState.deleteDisabled;
+  dom.explorerCopyBtn.disabled = actionState.pullDisabled;
+  dom.explorerCutBtn.disabled = actionState.pullDisabled;
+  dom.explorerPasteBtn.disabled = actionState.pushDisabled;
 }
 
 export function updateAppCount(filtered, total) {

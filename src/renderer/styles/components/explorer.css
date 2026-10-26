@@ -1,16 +1,7 @@
 /* Explorer */
-.explorer-toolbar {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-  padding-bottom: 4px;
-}
-
 .explorer-breadcrumb {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 2px;
   min-height: 24px;
   padding: 2px 0;
@@ -57,57 +48,6 @@
   align-items: center;
 }
 
-.explorer-path-container {
-  flex: 1;
-  min-width: 0;
-}
-
-.explorer-path-input {
-  width: 100%;
-}
-
-.explorer-action-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.action-group {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.action-group-separator {
-  width: 1px;
-  height: 18px;
-  background-color: var(--border);
-  margin: 0 4px;
-}
-
-.explorer-action-row .btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-}
-
-.explorer-action-row .btn svg {
-  opacity: 0.85;
-}
-
-.explorer-action-row .btn:hover svg {
-  opacity: 1;
-}
-
-.explorer-entry {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
-}
-
 .explorer-icon {
   display: flex;
   align-items: center;
@@ -129,29 +69,124 @@
   font-size: 13px;
 }
 
-.explorer-size {
+.explorer-size,
+.explorer-modified {
   font-size: 11.5px;
   color: var(--text-muted);
   flex-shrink: 0;
   text-align: right;
-  min-width: 60px;
+  width: 72px;
   font-family: 'Cascadia Code', 'Consolas', monospace;
+}
+
+.explorer-modified {
+  width: 120px;
+}
+
+/* Sortable column headers, aligned with the row cells (icon 20px + gaps) */
+.explorer-columns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 0 18px 0 40px;
+  margin-bottom: -6px;
+}
+
+.explorer-col {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.explorer-col:hover {
+  color: var(--text-primary);
+}
+
+.explorer-col.sorted {
+  color: var(--accent);
+}
+
+.explorer-col.sorted::after {
+  content: ' ▲';
+  font-size: 9px;
+}
+
+.explorer-col.sorted.desc::after {
+  content: ' ▼';
+}
+
+.explorer-col-name {
+  flex: 1;
+}
+
+.explorer-col-size {
+  width: 72px;
+  text-align: right;
+}
+
+.explorer-col-modified {
+  width: 120px;
+  text-align: right;
+}
+
+/* Narrow windows: the action buttons move to their own row, together */
+#tabExplorer .pane-header {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
+.explorer-header-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.explorer-filter {
+  flex: 1 1 120px;
+  max-width: 220px;
+  min-width: 90px; /* inputs default to ~170px, which would force a wrap */
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* Files dragged in from Windows */
+.item-list.drop-target {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+  background-color: var(--bg-selected);
+}
+
+/* Right-click menu, placed at the cursor by explorer.js */
+.context-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: auto;
+  z-index: 30;
+}
+
+.menu-item-danger {
+  color: var(--danger);
+}
+
+.menu-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .explorer-file {
   color: var(--text-secondary);
 }
 
-.explorer-file:hover {
-  color: var(--text-primary) !important;
-}
-
-.explorer-file.selected,
-.explorer-dir.selected {
-  background-color: var(--bg-selected) !important;
-  border-left: 3px solid var(--accent);
-  padding-left: 7px;
-  color: var(--text-primary) !important;
+.explorer-file:hover,
+.explorer-file.selected {
+  color: var(--text-primary);
 }
 
 .explorer-status-bar {
@@ -201,7 +236,6 @@
 .explorer-cancel-btn {
   flex-shrink: 0;
   padding: 2px 8px;
-  font-size: 11px;
 }
 
 .explorer-progress-bar {
@@ -218,4 +252,80 @@
   background-color: var(--accent);
   border-radius: 2px;
   transition: width 0.15s ease;
+}
+
+/* Path bar: breadcrumb by default, swaps to a text input when editing */
+.explorer-path-container {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 4px;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.explorer-path-container:focus-within {
+  border-color: var(--accent);
+}
+
+.explorer-path-container .explorer-breadcrumb {
+  flex: 1;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  cursor: text;
+}
+
+.explorer-path-container .explorer-path-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 4px 6px;
+}
+
+.explorer-edit-path {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.explorer-edit-path:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-hover);
+}
+
+/* Contextual actions for the current selection */
+.selection-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 5px 6px 5px 12px;
+  background-color: var(--bg-selected);
+  border-radius: var(--radius);
+}
+
+/* Nothing selected: same height (no layout shift), just quieter. */
+.selection-bar.is-empty {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1px var(--border-light);
+}
+
+.selection-bar.is-empty .selection-count {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.selection-count {
+  flex: 1;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
 }

@@ -1,0 +1,330 @@
+/* Idle mascot (modules/mascot.js): an overlay lane at the bottom of the active section.
+   Click-through everywhere except the peeking head. */
+.main-content {
+  position: relative;
+}
+
+.mascot-stage {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 12px;
+  height: 120px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.m-bot {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 48px;
+  height: 56px;
+  display: none;
+  transition: bottom 0.4s ease;
+}
+
+.m-bot.m-on {
+  display: block;
+}
+
+.m-svg {
+  display: block;
+  overflow: visible;
+  transform-origin: 50% 50%;
+}
+
+.m-fill,
+.m-leg,
+.m-arm,
+.m-peek-arm {
+  fill: #3ddc84;
+}
+
+.m-antennae path,
+.m-antenna-line {
+  fill: none;
+  stroke: #3ddc84;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.m-eyes circle,
+.m-eye {
+  fill: #12161f;
+}
+
+.m-eyes-shut {
+  fill: none;
+  stroke: #12161f;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.m-eyes-spin circle {
+  fill: none;
+  stroke: #12161f;
+  stroke-width: 1.4;
+  stroke-dasharray: 9 8;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: m-spin 0.7s linear infinite;
+}
+
+.m-leg,
+.m-arm {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+}
+
+.m-antennae {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.m-torso {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+/* Props, shown only by the action that uses them */
+.m-eyes-shut,
+.m-eyes-spin,
+.m-rod,
+.m-charge-cable,
+.m-balls,
+.m-stars,
+.m-bridge,
+.m-zzz,
+.m-notes,
+.m-battery {
+  display: none;
+}
+
+.m-bridge,
+.m-zzz,
+.m-notes,
+.m-battery {
+  position: absolute;
+  bottom: 0;
+}
+
+.m-wire {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.m-plug {
+  fill: var(--text-secondary);
+}
+
+.m-arch {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.m-rod-pole {
+  stroke: var(--text-secondary);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.m-line {
+  stroke: var(--text-muted);
+  stroke-width: 0.8;
+}
+
+.m-bobber {
+  fill: #e24b4a;
+  transform-box: fill-box;
+  animation: m-bobber 1s ease-in-out infinite alternate;
+}
+
+.m-catch,
+.m-ball {
+  fill: var(--accent);
+}
+
+.m-catch {
+  opacity: 0;
+  transform-box: fill-box;
+  animation: m-catch 6s ease-out infinite;
+}
+
+.m-stars path {
+  fill: var(--warning);
+}
+
+.m-zzz span,
+.m-notes span {
+  position: absolute;
+  bottom: 0;
+  opacity: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.m-zzz span {
+  color: var(--text-secondary);
+  animation: m-float 2.4s ease-out infinite;
+}
+
+.m-notes span {
+  color: var(--accent);
+  font-size: 15px;
+  animation: m-float 1.8s ease-out infinite;
+}
+
+.m-zzz span:nth-child(2),
+.m-notes span:nth-child(2) { left: 9px; animation-delay: 0.6s; }
+.m-zzz span:nth-child(3),
+.m-notes span:nth-child(3) { left: 18px; animation-delay: 1.2s; }
+
+.m-battery {
+  width: 26px;
+  height: 11px;
+  padding: 1.5px;
+  border: 1.5px solid var(--text-secondary);
+  border-radius: 3px;
+}
+
+.m-battery-fill {
+  width: 0;
+  height: 100%;
+  border-radius: 1px;
+  background: #3ddc84;
+}
+
+/* Stage-level props */
+.mascot-stage[data-action="fish"] .m-bridge,
+.mascot-stage:has(.m-bot.m-nap) .m-zzz,
+.mascot-stage:has(.m-bot.m-dance) .m-notes,
+.mascot-stage.m-charging .m-battery {
+  display: block;
+}
+
+.mascot-stage.m-charging .m-battery-fill {
+  width: 100%;
+  transition: width 3.2s linear;
+}
+
+/* Walking and running */
+.m-walking .m-leg-l, .m-walking .m-arm-r,
+.m-running .m-leg-l, .m-running .m-arm-r { animation: m-step 0.35s infinite alternate; }
+.m-walking .m-leg-r, .m-walking .m-arm-l,
+.m-running .m-leg-r, .m-running .m-arm-l { animation: m-step 0.35s infinite alternate-reverse; }
+.m-running .m-leg, .m-running .m-arm { animation-duration: 0.14s; }
+.m-walking .m-torso, .m-running .m-torso { animation: m-bob 0.35s infinite alternate; }
+
+/* Wave */
+.m-wave .m-arm-r { animation: m-wave 0.4s infinite alternate; }
+
+/* Nap */
+.m-nap .m-eyes, .m-plugged .m-eyes { display: none; }
+.m-nap .m-eyes-shut { display: inline; }
+.m-nap .m-torso, .m-nap .m-arm { animation: m-breathe 1.6s ease-in-out infinite alternate; }
+.m-nap .m-leg { transform: scaleY(0.5); transform-origin: 50% 100%; }
+
+/* Fishing */
+.m-fish .m-rod { display: inline; }
+
+/* Dance party */
+.m-dance .m-svg { animation: m-dance 2.4s ease-in-out infinite; }
+.m-dance .m-arm-r { animation: m-arms-r 0.3s infinite alternate; }
+.m-dance .m-arm-l { animation: m-arms-l 0.3s infinite alternate; }
+.m-dance .m-antennae { animation: m-wiggle 0.25s infinite alternate; }
+
+/* APK juggling */
+.m-juggle .m-balls { display: inline; }
+.m-juggle .m-arm-l { transform: rotate(35deg); }
+.m-juggle .m-arm-r { transform: rotate(-35deg); }
+.m-juggle .m-ball { animation: m-juggle 1.2s linear infinite; }
+.m-juggle .m-ball-2 { animation-delay: -0.4s; }
+.m-juggle .m-ball-3 { animation-delay: -0.8s; }
+.m-bonk .m-ball { opacity: 0; animation: none; }
+.m-bonk .m-ball-1 { opacity: 1; animation: m-bonk 1.6s ease-in forwards; }
+.m-bonk .m-stars { display: inline; transform-box: view-box; transform-origin: 30px 0; animation: m-spin 0.9s linear infinite; }
+.m-bonk .m-torso { animation: m-wobble 0.3s ease-in-out infinite alternate; }
+
+/* Charging up */
+.m-plugged .m-charge-cable { display: inline; }
+.m-plugged .m-eyes-spin { display: inline; }
+.m-hyper .m-antennae { animation: m-wiggle 0.1s infinite alternate; }
+
+/* Corner peek: the hidden trigger */
+.m-peek {
+  position: absolute;
+  right: 10px;
+  bottom: 0;
+  width: 36px;
+  height: 26px;
+  transform: translateY(100%);
+}
+
+.m-peek.m-peeking {
+  pointer-events: auto;
+  cursor: pointer;
+  animation: m-peek 1.8s ease-in-out;
+}
+
+.m-peek-arm {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.m-peek.m-peeking .m-peek-arm { animation: m-peek-wave 0.3s ease-in-out infinite alternate; }
+
+@keyframes m-step { from { transform: rotate(-24deg); } to { transform: rotate(24deg); } }
+@keyframes m-bob { to { transform: translateY(-2px); } }
+@keyframes m-wave { from { transform: rotate(-165deg); } to { transform: rotate(-115deg); } }
+@keyframes m-breathe { from { transform: translateY(6px); } to { transform: translateY(6px) scaleY(0.95); } }
+@keyframes m-bobber { to { transform: translateY(4px); } }
+@keyframes m-catch {
+  0%, 78% { opacity: 0; transform: translate(0, 0); }
+  84% { opacity: 1; transform: translate(0, -30px); }
+  95% { opacity: 1; transform: translate(-12px, -48px); }
+  100% { opacity: 0; transform: translate(-12px, -48px); }
+}
+@keyframes m-dance {
+  0%, 100% { transform: translateY(0) scaleX(1); }
+  15% { transform: translateY(-12px) scaleX(1); }
+  30% { transform: translateY(0) scaleX(1); }
+  45% { transform: translateY(0) scaleX(-1); }
+  60% { transform: translateY(-12px) scaleX(-1); }
+  75% { transform: translateY(0) scaleX(1); }
+}
+@keyframes m-arms-r { from { transform: rotate(-160deg); } to { transform: rotate(-40deg); } }
+@keyframes m-arms-l { from { transform: rotate(160deg); } to { transform: rotate(40deg); } }
+@keyframes m-wiggle { from { transform: rotate(-12deg); } to { transform: rotate(12deg); } }
+@keyframes m-juggle {
+  0% { transform: translate(6px, 30px); }
+  18% { transform: translate(12px, -6px); }
+  35% { transform: translate(30px, -18px); }
+  52% { transform: translate(48px, -6px); }
+  70% { transform: translate(54px, 30px); }
+  85% { transform: translate(30px, 36px); }
+  100% { transform: translate(6px, 30px); }
+}
+@keyframes m-bonk {
+  0% { transform: translate(30px, -40px); }
+  45% { transform: translate(30px, 2px); }
+  70% { transform: translate(52px, -16px); }
+  100% { transform: translate(72px, 60px); opacity: 0; }
+}
+@keyframes m-spin { to { transform: rotate(360deg); } }
+@keyframes m-wobble { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+@keyframes m-float {
+  0% { opacity: 0; transform: translate(0, 0); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translate(12px, -38px); }
+}
+@keyframes m-peek {
+  0%, 100% { transform: translateY(100%); }
+  20%, 80% { transform: translateY(12%); }
+}
+@keyframes m-peek-wave { from { transform: rotate(-25deg); } to { transform: rotate(25deg); } }

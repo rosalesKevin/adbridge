@@ -5,46 +5,41 @@ function formatBytes(bytes) {
   return gb >= 1 ? `${gb.toFixed(1)} GB` : `${(bytes / (1024 ** 2)).toFixed(0)} MB`;
 }
 
-function buildInfoBar(data, ip) {
+function infoRow(label, value) {
+  const row = document.createElement('div');
+  row.className = 'info-row';
+  const labelEl = document.createElement('span');
+  labelEl.className = 'info-label';
+  labelEl.textContent = label;
+  const valueEl = document.createElement('span');
+  valueEl.className = 'info-value';
+  valueEl.textContent = value;
+  valueEl.title = value;
+  row.append(labelEl, valueEl);
+  return row;
+}
+
+function buildInfoBar(data, ip, deviceId) {
   const { model, manufacturer, androidVersion, batteryLevel, batteryCharging, memUsedBytes, memTotalBytes } = data;
 
-  const parts = [];
-
-  const displayName = manufacturer ? `${manufacturer} ${model}` : model;
-  if (displayName) parts.push(displayName);
-
-  if (androidVersion) parts.push(`Android ${androidVersion}`);
-
-  if (batteryLevel !== null) {
-    const charging = batteryCharging ? ' ⚡' : '';
-    parts.push(`🔋 ${batteryLevel}%${charging}`);
-  }
-
+  const rows = [];
+  const maker = manufacturer ? manufacturer.charAt(0).toUpperCase() + manufacturer.slice(1) : '';
+  const displayName = maker ? `${maker} ${model}` : model;
+  if (displayName) rows.push(['Model', displayName]);
+  if (androidVersion) rows.push(['Android', androidVersion]);
+  if (batteryLevel !== null) rows.push(['Battery', `${batteryLevel}%${batteryCharging ? ' ⚡ charging' : ''}`]);
   if (memUsedBytes !== null && memTotalBytes !== null) {
-    parts.push(`RAM ${formatBytes(memUsedBytes)} / ${formatBytes(memTotalBytes)}`);
+    rows.push(['RAM', `${formatBytes(memUsedBytes)} / ${formatBytes(memTotalBytes)}`]);
   }
+  if (ip) rows.push(['IP', ip]);
+  rows.push(['ID', deviceId]);
 
-  if (ip) parts.push(`IP ${ip}`);
-
-  dom.deviceInfoBar.innerHTML = '';
-  for (let i = 0; i < parts.length; i++) {
-    const chip = document.createElement('span');
-    chip.className = 'info-chip';
-    chip.textContent = parts[i];
-    dom.deviceInfoBar.appendChild(chip);
-
-    if (i < parts.length - 1) {
-      const sep = document.createElement('span');
-      sep.className = 'info-sep';
-      sep.textContent = '·';
-      dom.deviceInfoBar.appendChild(sep);
-    }
-  }
+  dom.deviceInfoBar.replaceChildren(...rows.map(([label, value]) => infoRow(label, value)));
 }
 
 export async function loadDeviceInfo(deviceId) {
   dom.deviceInfoBar.classList.remove('hidden');
-  dom.deviceInfoBar.innerHTML = '<span class="info-chip" style="color:var(--text-muted)">Loading device info...</span>';
+  dom.deviceInfoBar.replaceChildren(infoRow('Loading…', ''));
 
   const [infoResult, ipResult] = await Promise.all([
     window.adb.deviceInfo(deviceId),
@@ -57,7 +52,7 @@ export async function loadDeviceInfo(deviceId) {
   }
 
   const ip = ipResult.success ? ipResult.data : null;
-  buildInfoBar(infoResult.data, ip);
+  buildInfoBar(infoResult.data, ip, deviceId);
 }
 
 export function clearDeviceInfo() {

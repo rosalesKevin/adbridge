@@ -1,29 +1,19 @@
 import { dom } from './dom.js';
 
-const PANES = ['tabApps', 'tabExplorer', 'tabLogcat'];
-const BTN_FOR_PANE = {
-  tabApps: 'tabBtnApps',
-  tabExplorer: 'tabBtnExplorer',
-  tabLogcat: 'tabBtnLogcat'
-};
+// Pane id → its sidebar nav button id
+const TABS = { tabApps: 'tabBtnApps', tabExplorer: 'tabBtnExplorer', tabLogcat: 'tabBtnLogcat' };
 
-export function showTab(id, callbacks = {}) {
-  PANES.forEach((paneId) => dom[paneId].classList.remove('active'));
-  PANES.forEach((paneId) => dom[BTN_FOR_PANE[paneId]].classList.remove('active'));
-
-  dom[id].classList.add('active');
-  dom[BTN_FOR_PANE[id]].classList.add('active');
-
-  if (id === 'tabExplorer' && typeof callbacks.onExplorerTabShown === 'function') {
-    callbacks.onExplorerTabShown();
+function showTab(id, callbacks) {
+  for (const [pane, button] of Object.entries(TABS)) {
+    dom[pane].classList.toggle('active', pane === id);
+    dom[button].classList.toggle('active', pane === id);
   }
-  if (id === 'tabLogcat' && typeof callbacks.onLogcatTabShown === 'function') {
-    callbacks.onLogcatTabShown();
-  }
+  if (id === 'tabExplorer') callbacks.onExplorerTabShown();
+  if (id === 'tabLogcat') callbacks.onLogcatTabShown();
 }
 
-export function initTabs(callbacks = {}) {
-  dom.tabBtnApps.addEventListener('click', () => showTab('tabApps', callbacks));
-  dom.tabBtnExplorer.addEventListener('click', () => showTab('tabExplorer', callbacks));
-  dom.tabBtnLogcat.addEventListener('click', () => showTab('tabLogcat', callbacks));
+export function initTabs(callbacks) {
+  for (const [pane, button] of Object.entries(TABS)) {
+    dom[button].addEventListener('click', () => showTab(pane, callbacks));
+  }
 }

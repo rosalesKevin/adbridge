@@ -72,3 +72,18 @@ test('scrcpy service missing message points to sibling scrcpy folder first', () 
   assert.strictEqual(scrcpyPath.resolved, null);
   assert.strictEqual(scrcpyPath.expectedPath, 'C:\\Apps\\ADBridge\\scrcpy\\scrcpy.exe');
 });
+
+test('mirror args include only known options with preset values', () => {
+  const { buildMirrorArgs } = require('../src/main/scrcpy-service');
+
+  assert.deepStrictEqual(buildMirrorArgs('ABC123'), ['--serial', 'ABC123', '--no-audio']);
+  assert.deepStrictEqual(
+    buildMirrorArgs('ABC123', { stayAwake: true, turnScreenOff: true, showTouches: true, alwaysOnTop: true, maxSize: 1280, bitRate: 4 }),
+    ['--serial', 'ABC123', '--no-audio', '--stay-awake', '--turn-screen-off', '--show-touches', '--always-on-top', '--max-size=1280', '--video-bit-rate=4M']
+  );
+  assert.deepStrictEqual(
+    buildMirrorArgs('ABC123', { stayAwake: 'yes', maxSize: '1280 --evil', bitRate: 999 }),
+    ['--serial', 'ABC123', '--no-audio'],
+    'ignores non-boolean flags and values outside the presets'
+  );
+});

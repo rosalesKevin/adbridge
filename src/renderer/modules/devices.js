@@ -3,19 +3,15 @@ import { state } from './state.js';
 import { appendLog } from './logger.js';
 import { setBusy } from './ui-state.js';
 import { showConfirmDialog } from './confirm-dialog.js';
+import { getSettings } from './settings.js';
+import { deviceOptionLabel, isWirelessDevice } from './device-label.mjs';
 
 const mirrorRunningByDevice = new Map();
-let knownDeviceIds = new Set();
 let lastDevices = [];
-let storedCallbacks = {};
-
-function hasScrcpyApi() {
-  return typeof window.scrcpy !== 'undefined';
-}
-
-function isWirelessDevice(deviceId) {
-  return /^\d+\.\d+\.\d+\.\d+:\d+$/.test(deviceId);
-}
+let callbacks = {};
+// Friendly names by device id (null = device has none); fetched once per device.
+const deviceNames = new Map();
+const nameRequests = new Set();
 
 // ── Mirror button ─────────────────────────────────────────────────────────────
 
@@ -26,7 +22,6 @@ function setMirrorButtonState(running) {
 }
 
 function updateMirrorButton() {
-  if (!hasScrcpyApi()) return;
   const deviceId = state.selectedDeviceId;
   dom.mirrorBtn.disabled = !deviceId;
   setMirrorButtonState(deviceId ? mirrorRunningByDevice.get(deviceId) === true : false);
@@ -41,7 +36,7 @@ async function toggleMirror() {
 
   const result = running
     ? await window.scrcpy.stop(deviceId)
-    : await window.scrcpy.start(deviceId);
+    : await window.scrcpy.start(deviceId, getSettings().mirror);
 
   if (result.success) {
     const nextRunning = !running;
@@ -59,29 +54,17 @@ async function toggleMirror() {
 
 function updateWirelessButton() {
   const deviceId = state.selectedDeviceId;
+  const wireless = Boolean(deviceId) && isWirelessDevice(deviceId);
+  dom.wirelessBtn.disabled = !deviceId;
+  dom.wirelessBtn.textContent = wireless ? '⊘ Disconnect' : '⊛ Wireless';
+  dom.wirelessBtn.title = wireless ? 'Disconnect wireless ADB' : 'Set up wireless ADB';
+  dom.wirelessBtn.classList.toggle('btn-warning', wireless);
+  dom.wirelessBtn.classList.toggle('btn-secondary', !wireless);
+}
 
-  if (!deviceId) {
-    dom.wirelessBtn.disabled = true;
-    dom.wirelessBtn.textContent = '⊛ Wireless';
-    dom.wirelessBtn.title = 'Set up wireless ADB';
-    dom.wirelessBtn.classList.remove('btn-warning');
-    dom.wirelessBtn.classList.add('btn-secondary');
-    return;
-  }
-
-  if (isWirelessDevice(deviceId)) {
-    dom.wirelessBtn.disabled = false;
-    dom.wirelessBtn.textContent = '⊘ Disconnect';
-    dom.wirelessBtn.title = 'Disconnect wireless ADB';
-    dom.wirelessBtn.classList.remove('btn-secondary');
-    dom.wirelessBtn.classList.add('btn-warning');
-  } else {
-    dom.wirelessBtn.disabled = false;
-    dom.wirelessBtn.textContent = '⊛ Wireless';
-    dom.wirelessBtn.title = 'Set up wireless ADB';
-    dom.wirelessBtn.classList.remove('btn-warning');
-    dom.wirelessBtn.classList.add('btn-secondary');
-  }
+function updateDeviceButtons() {
+  updateMirrorButton();
+  updateWirelessButton();
 }
 
 async function handleWirelessBtn() {
@@ -105,7 +88,7 @@ async function handleWirelessBtn() {
 
     if (result.success) {
       appendLog(`Disconnected: ${result.data}`);
-      void refreshDevices({ ...storedCallbacks, silent: true });
+      void refreshDevices({ silent: true });
     } else {
       appendLog(`Disconnect failed: ${result.error}`);
     }
@@ -146,7 +129,7 @@ async function handleWirelessBtn() {
     if (result.success) {
       appendLog(`Wireless ADB ready — ${result.data.connect}`);
       // Give the connection a moment to register, then refresh
-      setTimeout(() => void refreshDevices({ ...storedCallbacks, silent: true }), 800);
+      setTimeout(() => void refreshDevices({ silent: true }), 800);
     } else {
       appendLog(`Wireless setup failed: ${result.error}`);
     }
@@ -156,8 +139,6 @@ async function handleWirelessBtn() {
 // ── Mirror statuses ───────────────────────────────────────────────────────────
 
 async function refreshMirrorStatuses(devices) {
-  if (!hasScrcpyApi()) return;
-
   const activeIds = new Set(devices.map((d) => d.id));
   for (const cachedId of mirrorRunningByDevice.keys()) {
     if (!activeIds.has(cachedId)) mirrorRunningByDevice.delete(cachedId);
@@ -173,9 +154,31 @@ async function refreshMirrorStatuses(devices) {
   );
 }
 
+// ── Device names ──────────────────────────────────────────────────────────────
+
+function relabelDeviceOptions() {
+  for (const opt of dom.deviceSelect.options) {
+    const device = lastDevices.find((d) => d.id === opt.value);
+    if (device) opt.textContent = deviceOptionLabel(device, deviceNames, lastDevices);
+  }
+}
+
+async function fetchMissingDeviceNames(devices) {
+  const missing = devices.filter((d) => d.status === 'device' && !deviceNames.has(d.id) && !nameRequests.has(d.id));
+  if (missing.length === 0) return;
+
+  await Promise.all(missing.map(async (d) => {
+    nameRequests.add(d.id);
+    const result = await window.adb.deviceName(d.id);
+    nameRequests.delete(d.id);
+    if (result.success) deviceNames.set(d.id, result.data); // failures retry on the next refresh
+  }));
+  relabelDeviceOptions();
+}
+
 // ── Selection ─────────────────────────────────────────────────────────────────
 
-function applySelection(device, onDeviceSelected) {
+function applySelection(device) {
   if (device.status !== 'device') {
     appendLog(`Device ${device.id} is ${device.status} — cannot manage apps.`);
     return;
@@ -188,13 +191,15 @@ function applySelection(device, onDeviceSelected) {
 
   state.selectedDeviceId = device.id;
   dom.deviceSelect.value = device.id;
-  updateMirrorButton();
-  updateWirelessButton();
+  updateDeviceButtons();
   appendLog(`Selected device: ${device.id}`);
+  callbacks.onDeviceSelected(device);
+}
 
-  if (typeof onDeviceSelected === 'function') {
-    onDeviceSelected(device);
-  }
+function clearSelection() {
+  state.selectedDeviceId = null;
+  updateDeviceButtons();
+  callbacks.onNoDevices();
 }
 
 // ── ADB status ────────────────────────────────────────────────────────────────
@@ -213,7 +218,7 @@ export async function checkAdbStatus() {
 
 // ── Main refresh ──────────────────────────────────────────────────────────────
 
-export async function refreshDevices({ silent = false, onNoDevices, onDeviceSelected, devices } = {}) {
+export async function refreshDevices({ silent = false, devices } = {}) {
   let currentDevices = devices;
 
   if (!currentDevices) {
@@ -231,10 +236,10 @@ export async function refreshDevices({ silent = false, onNoDevices, onDeviceSele
   }
 
   // Detect devices that just appeared or disappeared
+  const knownIds = new Set(lastDevices.map((d) => d.id));
   const currentIds = new Set(currentDevices.map((d) => d.id));
-  const newlyConnected = currentDevices.filter((d) => d.status === 'device' && !knownDeviceIds.has(d.id));
-  const devicesChanged = currentIds.size !== knownDeviceIds.size || [...currentIds].some((id) => !knownDeviceIds.has(id));
-  knownDeviceIds = currentIds;
+  const newlyConnected = currentDevices.filter((d) => d.status === 'device' && !knownIds.has(d.id));
+  const devicesChanged = currentIds.size !== knownIds.size || [...currentIds].some((id) => !knownIds.has(id));
   lastDevices = currentDevices;
 
   if (devicesChanged) await refreshMirrorStatuses(currentDevices);
@@ -248,12 +253,7 @@ export async function refreshDevices({ silent = false, onNoDevices, onDeviceSele
     opt.textContent = 'No devices';
     dom.deviceSelect.appendChild(opt);
 
-    if (state.selectedDeviceId !== null) {
-      state.selectedDeviceId = null;
-      updateMirrorButton();
-      updateWirelessButton();
-      if (typeof onNoDevices === 'function') onNoDevices();
-    }
+    if (state.selectedDeviceId !== null) clearSelection();
 
     if (!silent) appendLog('No devices found. Ensure USB debugging is enabled.');
     return;
@@ -262,41 +262,34 @@ export async function refreshDevices({ silent = false, onNoDevices, onDeviceSele
   for (const device of currentDevices) {
     const opt = document.createElement('option');
     opt.value = device.id;
-    const connType = isWirelessDevice(device.id) ? '[Wi-Fi]' : '[USB]';
-    opt.textContent = device.status === 'device'
-      ? `${connType} ${device.id}`
-      : `${connType} ${device.id} (${device.status})`;
+    opt.textContent = deviceOptionLabel(device, deviceNames, currentDevices);
+    opt.title = device.id;
     opt.disabled = device.status !== 'device';
     dom.deviceSelect.appendChild(opt);
   }
 
+  void fetchMissingDeviceNames(currentDevices);
+
   // If selected device disconnected, clear state
   if (state.selectedDeviceId) {
-    const stillConnected = currentDevices.some((d) => d.id === state.selectedDeviceId);
-    if (!stillConnected) {
-      state.selectedDeviceId = null;
+    const current = currentDevices.find((d) => d.id === state.selectedDeviceId);
+    if (!current) {
       appendLog('[Auto] Selected device disconnected.');
-      updateMirrorButton();
-      updateWirelessButton();
-      if (typeof onNoDevices === 'function') onNoDevices();
+      clearSelection();
     } else {
-      dom.deviceSelect.value = state.selectedDeviceId;
-      updateMirrorButton();
-      updateWirelessButton();
+      dom.deviceSelect.value = current.id;
+      updateDeviceButtons();
       // Manual refresh: reload packages to ensure list and button state are in sync
-      if (!silent && typeof onDeviceSelected === 'function') {
-        const current = currentDevices.find((d) => d.id === state.selectedDeviceId);
-        if (current) onDeviceSelected(current);
-      }
+      if (!silent) callbacks.onDeviceSelected(current);
     }
   }
 
   // Auto-select: prefer newly connected, else first ready device if nothing selected
   if (newlyConnected.length > 0) {
-    applySelection(newlyConnected[0], onDeviceSelected);
+    applySelection(newlyConnected[0]);
   } else if (!state.selectedDeviceId) {
     const first = currentDevices.find((d) => d.status === 'device');
-    if (first) applySelection(first, onDeviceSelected);
+    if (first) applySelection(first);
   }
 
   if (!silent) appendLog(`Found ${currentDevices.length} device(s).`);
@@ -304,57 +297,38 @@ export async function refreshDevices({ silent = false, onNoDevices, onDeviceSele
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
-export function initDevices(callbacks) {
-  storedCallbacks = callbacks;
+/** callbacks: { onDeviceSelected(device), onNoDevices() } */
+export function initDevices(deviceCallbacks) {
+  callbacks = deviceCallbacks;
 
-  if (!hasScrcpyApi()) {
-    dom.mirrorBtn.style.display = 'none';
-  }
-
-  if (typeof window.adb.onDevicesChanged === 'function') {
-    let debounceTimer = null;
-    window.adb.onDevicesChanged((devices) => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        void refreshDevices({ ...storedCallbacks, silent: true, devices });
-      }, 300);
-    });
-  }
+  let debounceTimer = null;
+  window.adb.onDevicesChanged((devices) => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => void refreshDevices({ silent: true, devices }), 300);
+  });
 
   // Polling fallback: adb track-devices is unreliable for USB on Windows.
   // Poll every 5 s to catch connect/disconnect events the tracker misses.
-  setInterval(() => {
-    void refreshDevices({ ...storedCallbacks, silent: true });
-  }, 5000);
+  setInterval(() => void refreshDevices({ silent: true }), 5000);
 
-  if (hasScrcpyApi() && typeof window.scrcpy.onStatusChange === 'function') {
-    window.scrcpy.onStatusChange((payload) => {
-      mirrorRunningByDevice.set(payload.deviceId, Boolean(payload.running));
+  window.scrcpy.onStatusChange((payload) => {
+    mirrorRunningByDevice.set(payload.deviceId, Boolean(payload.running));
 
-      if (payload.deviceId === state.selectedDeviceId) {
-        setMirrorButtonState(payload.running === true);
-      }
+    if (payload.deviceId === state.selectedDeviceId) {
+      setMirrorButtonState(payload.running === true);
+    }
 
-      if (payload.reason) {
-        appendLog(`Mirror status for ${payload.deviceId}: ${payload.reason}`);
-      }
-    });
-  }
+    if (payload.reason) {
+      appendLog(`Mirror status for ${payload.deviceId}: ${payload.reason}`);
+    }
+  });
 
   dom.deviceSelect.addEventListener('change', () => {
-    const deviceId = dom.deviceSelect.value;
-    if (!deviceId) return;
-    const device = lastDevices.find((d) => d.id === deviceId);
-    if (device) applySelection(device, callbacks.onDeviceSelected);
+    const device = lastDevices.find((d) => d.id === dom.deviceSelect.value);
+    if (device) applySelection(device);
   });
 
-  dom.refreshDevicesBtn.addEventListener('click', () => {
-    void refreshDevices({ ...callbacks, silent: false });
-  });
-
+  dom.refreshDevicesBtn.addEventListener('click', () => void refreshDevices());
   dom.wirelessBtn.addEventListener('click', () => void handleWirelessBtn());
-
-  if (hasScrcpyApi()) {
-    dom.mirrorBtn.addEventListener('click', () => void toggleMirror());
-  }
+  dom.mirrorBtn.addEventListener('click', () => void toggleMirror());
 }

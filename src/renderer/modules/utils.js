@@ -1,6 +1,6 @@
 const toastContainer = document.getElementById('toastContainer');
 
-export function showToast(message, type = 'info', durationMs = 3000) {
+export function showToast(message, type = 'info') {
   const el = document.createElement('div');
   el.className = `toast toast-${type}`;
   el.textContent = message;
@@ -13,7 +13,11 @@ export function showToast(message, type = 'info', durationMs = 3000) {
   setTimeout(() => {
     el.classList.add('toast-hide');
     el.addEventListener('transitionend', () => el.remove(), { once: true });
-  }, durationMs);
+  }, 3000);
+}
+
+export function prefersReducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 export function escapeHtml(text) {

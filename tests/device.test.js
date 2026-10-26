@@ -103,6 +103,33 @@ function loadDeviceWithStubs(stubs) {
     assert.equal(calls.length, 5, 'queries the expected five adb properties/data sources');
   }
 
+  {
+    const loadWithShell = (answers) => loadDeviceWithStubs({
+      os: { networkInterfaces: () => ({}) },
+      childProcess: { spawn() { throw new Error('unused'); } },
+      runner: { runAdb: async (args) => ({ stdout: answers[args.slice(3).join(' ')] ?? '', stderr: '' }) },
+      resolver: { getAdbExe: () => 'adb.exe' },
+      validation: { validateDeviceId() {} }
+    });
+
+    assert.equal(
+      await loadWithShell({ 'settings get global device_name': "Kevin's S23\r\n" }).getDeviceName('ABC123'),
+      "Kevin's S23",
+      'prefers the device name set in Android settings'
+    );
+    assert.equal(
+      await loadWithShell({ 'settings get global device_name': 'null', 'getprop ro.product.marketname': 'Galaxy S23' }).getDeviceName('ABC123'),
+      'Galaxy S23',
+      'falls back to the marketing name when no device name is set'
+    );
+    assert.equal(
+      await loadWithShell({ 'getprop ro.product.model': 'Pixel 8' }).getDeviceName('ABC123'),
+      'Pixel 8',
+      'falls back to the model'
+    );
+    assert.equal(await loadWithShell({}).getDeviceName('ABC123'), null, 'returns null when nothing is available');
+  }
+
   console.log('All tests passed.');
 })().catch((error) => {
   console.error(error);

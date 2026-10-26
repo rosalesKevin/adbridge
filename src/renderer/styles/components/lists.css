@@ -46,38 +46,6 @@
   background-color: transparent;
 }
 
-.device-id {
-  flex: 1;
-  font-size: 12.5px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.device-status {
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  flex-shrink: 0;
-}
-
-.device-status.status-device {
-  background-color: rgba(52, 208, 104, 0.12);
-  color: #34d068;
-}
-
-.device-status.status-unauthorized {
-  background-color: rgba(224, 140, 26, 0.12);
-  color: #e08c1a;
-}
-
-.device-status.status-offline {
-  background-color: rgba(232, 69, 69, 0.12);
-  color: #e84545;
-}
 
 .package-name {
   flex: 1;
@@ -87,92 +55,88 @@
   white-space: nowrap;
 }
 
-.bottom-actions {
-  display: flex;
-  align-items: stretch;
-  flex-shrink: 0;
-  gap: 0;
-}
-
-.install-section {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
-}
-
-.actions-separator {
-  width: 1px;
-  background: var(--border);
-  margin: 0 12px;
-  flex-shrink: 0;
-}
-
-.app-actions-section {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
-}
-
-.selected-app-row {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-}
-
-.selected-app-label {
-  font-size: 11.5px;
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-style: italic;
-  flex: 1;
-  min-width: 0;
-}
-
-.selected-app-label.has-selection {
-  color: var(--accent);
-  font-style: normal;
-}
-
-.btn-deselect {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 15px;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 0;
-  flex-shrink: 0;
-  border-radius: 50%;
-  line-height: 1;
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.btn-deselect:hover {
-  background-color: var(--bg-hover);
-  color: var(--danger);
-}
-
-.btn-deselect.hidden {
+/* Selected-app actions: apps.js moves this block into the selected row. */
+.tab-pane > .app-row-actions {
   display: none;
 }
 
-.app-action-row {
+.app-row-actions {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+  cursor: default;
 }
 
-.app-action-row .btn {
-  flex: 1;
+/* Fixed row height: the selected row's actions (23px) fit inside it, so selecting never resizes the row. */
+.app-list {
+  container-type: inline-size;
+}
+
+.app-list li:not(.empty-state) {
+  height: 33px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Narrow list: icon-only actions (titles keep the full text) so the package name keeps its room. */
+@container (max-width: 640px) {
+  .row-action-label {
+    display: none;
+  }
+}
+
+.row-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 3px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.row-action:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.row-action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.row-action-toggle input {
+  accent-color: var(--accent);
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
+}
+
+.row-action-toggle:has(input:checked) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.row-action-warning:hover:not(:disabled) {
+  color: var(--warning);
+  border-color: var(--warning);
+}
+
+.row-action-danger:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* Highlight for apps that appeared through a live refresh */
+.item-list li.just-added {
+  background-color: rgba(34, 168, 85, 0.14);
+  box-shadow: inset 3px 0 0 var(--success);
 }

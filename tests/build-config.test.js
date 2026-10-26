@@ -36,10 +36,15 @@ test('windows build copies scrcpy beside the app executable via extraFiles', () 
       { from: 'vendor/scrcpy', to: 'scrcpy', filter: ['**/*'] },
       { from: 'vendor/LICENSES', to: 'LICENSES', filter: ['**/*'] },
       { from: 'docs/THIRD_PARTY_LICENSES.md', to: 'THIRD_PARTY_LICENSES.md' },
-      { from: 'build/README.txt', to: 'README.txt' }
+      { from: 'build/README.txt', to: 'README.txt' },
+      { from: 'LICENSE', to: 'LICENSE.txt' }
     ],
-    'release folder should contain a sibling scrcpy directory, bundled license attributions, and top-level README.txt'
+    'release folder should contain a sibling scrcpy directory, bundled license attributions, top-level README.txt and the MIT LICENSE.txt'
   );
+});
+
+test('package declares the MIT license', () => {
+  assert.strictEqual(packageJson.license, 'MIT');
 });
 
 test('windows build keeps only en-US Electron locale files', () => {
@@ -68,7 +73,7 @@ test('rcedit is available as a local dev dependency for post-build patching', ()
 test('build script runs only the dir build step', () => {
   assert.strictEqual(
     packageJson.scripts?.build,
-    'npm run build:dir',
-    'build script should only run build:dir — no extra packaging step'
+    'electron-builder --win dir',
+    'build script should only run the folder build — no extra packaging step'
   );
 });

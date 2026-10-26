@@ -1,7 +1,8 @@
 const scrcpyService = require('../scrcpy-service');
+const { respond } = require('./respond');
 
 function registerScrcpyHandlers(ipcMain) {
-  ipcMain.handle('scrcpy:start', async (event, deviceId) => {
+  ipcMain.handle('scrcpy:start', async (event, deviceId, options) => {
     try {
       const result = scrcpyService.startMirror(deviceId, (eventType, detail) => {
         if (!event.sender.isDestroyed()) {
@@ -11,7 +12,7 @@ function registerScrcpyHandlers(ipcMain) {
             reason: `${eventType}: ${detail}`
           });
         }
-      });
+      }, options);
 
       return result;
     } catch (err) {
@@ -27,14 +28,7 @@ function registerScrcpyHandlers(ipcMain) {
     }
   });
 
-  ipcMain.handle('scrcpy:status', async (_event, deviceId) => {
-    try {
-      const running = scrcpyService.isMirrorRunning(deviceId);
-      return { success: true, data: { running } };
-    } catch (err) {
-      return { success: false, error: err.message };
-    }
-  });
+  ipcMain.handle('scrcpy:status', respond((_event, deviceId) => ({ running: scrcpyService.isMirrorRunning(deviceId) })));
 }
 
 module.exports = { registerScrcpyHandlers };

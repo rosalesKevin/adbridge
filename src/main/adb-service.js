@@ -1,16 +1,15 @@
-const { validateDeviceId } = require('./adb/validation');
-const { checkAdb, getDevices, startDeviceTracking, stopDeviceTracking, getDeviceInfo, getDeviceIp, setupWireless, disconnectWireless, checkSameNetwork } = require('./adb/device');
-const { getPackages, uninstallApp, clearAppData, installApk } = require('./adb/packages');
-const { pushFile, pullFile, listDirectory, makeDirectory, deleteEntry, renameEntry } = require('./adb/files');
+const { checkAdb, getDevices, startDeviceTracking, stopDeviceTracking, getDeviceInfo, getDeviceName, getDeviceIp, setupWireless, disconnectWireless, checkSameNetwork } = require('./adb/device');
+const { getPackages, uninstallApp, clearAppData, grantAllPermissions, getPackageUpdateTime, installApk } = require('./adb/packages');
+const { pushFile, pullFile, listDirectory, makeDirectory, deleteEntry, renameEntry, statEntry, copyEntry, moveEntry } = require('./adb/files');
 const { cancelActiveTransfer } = require('./adb/runner');
 
 module.exports = {
-  validateDeviceId,
   checkAdb,
   getDevices,
   startDeviceTracking,
   stopDeviceTracking,
   getDeviceInfo,
+  getDeviceName,
   getDeviceIp,
   setupWireless,
   disconnectWireless,
@@ -18,6 +17,8 @@ module.exports = {
   getPackages,
   uninstallApp,
   clearAppData,
+  grantAllPermissions,
+  getPackageUpdateTime,
   installApk,
   pushFile,
   pullFile,
@@ -25,5 +26,8 @@ module.exports = {
   makeDirectory,
   deleteEntry,
   renameEntry,
+  statEntry,
+  copyEntry,
+  moveEntry,
   cancelActiveTransfer
 };

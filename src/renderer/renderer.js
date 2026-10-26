@@ -6,7 +6,8 @@
 import { dom } from './modules/dom.js';
 import { state } from './modules/state.js';
 import { appendLog, initLogger } from './modules/logger.js';
-import { initApps, loadPackages, clearAppList } from './modules/apps.js';
+import { initApps, loadPackages, clearAppList, refreshPackagesLive } from './modules/apps.js';
+import { initAutoGrant } from './modules/auto-grant.js';
 import { initExplorer, explorerNavigate, clearExplorer, handleDeviceSelectedForExplorer } from './modules/explorer.js';
 import { initDevices, checkAdbStatus, refreshDevices } from './modules/devices.js';
 import { initTabs } from './modules/tabs.js';
@@ -14,6 +15,8 @@ import { initLogcat, refreshLogcatAppList, stopLogcatIfRunning, clearLogcat } fr
 import { loadDeviceInfo, clearDeviceInfo } from './modules/device-info.js';
 import { initResize } from './modules/resize.js';
 import { initUpdater } from './modules/updater.js';
+import { initSettings } from './modules/settings.js';
+import { initMascot } from './modules/mascot.js';
 
 async function initAppVersion() {
   try {
@@ -49,19 +52,46 @@ function onExplorerTabShown() {
   }
 }
 
-function onLogcatTabShown() {
-  refreshLogcatAppList();
+function isShown(pane) {
+  return pane.classList.contains('active');
+}
+
+function refreshVisibleSection() {
+  if (!state.selectedDeviceId || state.busy) return;
+  if (isShown(dom.tabApps)) void loadPackages();
+  else if (isShown(dom.tabExplorer)) void explorerNavigate(state.explorerPath);
+}
+
+function initRefreshTriggers() {
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'F5') return;
+    event.preventDefault();
+    refreshVisibleSection();
+  });
+
+  // Catch changes made on the phone or in other tools while ADBridge was in the background.
+  // The delay lets an action started from a native file dialog (e.g. Push) mark itself busy first.
+  window.addEventListener('focus', () => {
+    setTimeout(() => {
+      if (isShown(dom.tabApps)) void refreshPackagesLive();
+      else if (isShown(dom.tabExplorer) && state.explorerSelectedItems.length === 0) refreshVisibleSection();
+    }, 300);
+  });
 }
 
 function initEvents() {
   initLogger();
   initResize();
-  initTabs({ onExplorerTabShown, onLogcatTabShown });
+  initTabs({ onExplorerTabShown, onLogcatTabShown: refreshLogcatAppList });
   initApps();
   initExplorer();
   initLogcat();
   initDevices({ onNoDevices, onDeviceSelected });
   initUpdater();
+  initSettings();
+  initMascot();
+  initAutoGrant();
+  initRefreshTriggers();
 }
 
 async function init() {
@@ -69,7 +99,7 @@ async function init() {
   initEvents();
   await initAppVersion();
   await checkAdbStatus();
-  await refreshDevices({ onNoDevices, onDeviceSelected });
+  await refreshDevices();
 }
 
 void init();

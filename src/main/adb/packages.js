@@ -39,7 +39,57 @@ async function clearAppData(deviceId, packageName) {
 }
 
 
-async function installApk(deviceId, apkPath) {
+/**
+ * Extracts the "requested permissions:" block from `dumpsys package` output.
+ * Names are passed to the device shell, so anything beyond [A-Za-z0-9_.] is dropped.
+ */
+function parseRequestedPermissions(dumpsysOutput) {
+  const permissions = [];
+  let headerIndent = -1;
+
+  for (const line of dumpsysOutput.split('\n')) {
+    const indent = line.search(/\S/);
+    if (headerIndent < 0) {
+      if (line.trim() === 'requested permissions:') headerIndent = indent;
+      continue;
+    }
+    if (indent <= headerIndent) break;
+
+    const name = line.trim().split(/[:\s]/)[0];
+    if (/^[A-Za-z0-9_.]+$/.test(name)) permissions.push(name);
+  }
+
+  return permissions;
+}
+
+async function grantAllPermissions(deviceId, packageName) {
+  validateDeviceId(deviceId);
+  validatePackageName(packageName);
+
+  const { stdout } = await runAdb(['-s', deviceId, 'shell', 'dumpsys', 'package', packageName]);
+  const granted = [];
+  const skipped = [];
+
+  for (const permission of parseRequestedPermissions(stdout)) {
+    // pm grant prints nothing on success; install-time/special permissions print an exception.
+    const result = await runAdb(['-s', deviceId, 'shell', 'pm', 'grant', packageName, permission]);
+    (result.stdout || result.stderr ? skipped : granted).push(permission);
+  }
+
+  return { granted, skipped };
+}
+
+/** Returns the package's lastUpdateTime (changes on every install/update), or null if not installed. */
+async function getPackageUpdateTime(deviceId, packageName) {
+  validateDeviceId(deviceId);
+  validatePackageName(packageName);
+
+  const { stdout } = await runAdb(['-s', deviceId, 'shell', 'dumpsys', 'package', packageName]);
+  const match = stdout.match(/lastUpdateTime=([^\r\n]+)/);
+  return match ? match[1].trim() : null;
+}
+
+async function installApk(deviceId, apkPath, options) {
   validateDeviceId(deviceId);
 
   if (!apkPath || typeof apkPath !== 'string') {
@@ -53,18 +103,18 @@ async function installApk(deviceId, apkPath) {
   }
 
   // Use inactivity timeout for installs as large APKs can take a long time to push and install
-  const installArgs = ['-s', deviceId, 'install', '-r', apkPath];
+  const flags = options?.grantPermissions === true ? ['-r', '-g'] : ['-r'];
+  const installArgs = ['-s', deviceId, 'install', ...flags, apkPath];
 
   try {
     return await spawnAdbWithInactivityTimeout(installArgs, 60000);
   } catch (error) {
-    const message = String(error?.message || error);
-    if (!message.includes('INSTALL_FAILED_DEPRECATED_SDK_VERSION')) {
+    if (!error.message.includes('INSTALL_FAILED_DEPRECATED_SDK_VERSION')) {
       throw error;
     }
 
     return spawnAdbWithInactivityTimeout(
-      ['-s', deviceId, 'install', '--bypass-low-target-sdk-block', '-r', apkPath],
+      ['-s', deviceId, 'install', '--bypass-low-target-sdk-block', ...flags, apkPath],
       60000
     );
   }
@@ -74,5 +124,8 @@ module.exports = {
   getPackages,
   uninstallApp,
   clearAppData,
+  parseRequestedPermissions,
+  grantAllPermissions,
+  getPackageUpdateTime,
   installApk
 };

@@ -16,21 +16,30 @@ limitations under the License.
 
 ----
 
-scrcpy bundles or links against the following third-party components
-on Windows (shipped inside vendor/scrcpy/ in this distribution):
+scrcpy v3.3.4 (Windows release) ships the following third-party components
+inside the scrcpy/ folder of this distribution. The exact upstream versions
+and build scripts are pinned by scrcpy's app/deps directory:
+https://github.com/Genymobile/scrcpy/tree/v3.3.4/app/deps
+(no patches are applied to these sources).
 
-  * FFmpeg (avcodec, avformat, avutil, swresample, swscale)
-    Licensed under LGPL v2.1 or later. Source and build instructions:
-    https://ffmpeg.org/download.html
+  * FFmpeg 7.1.1 (avcodec-61.dll, avformat-61.dll, avutil-59.dll,
+    swresample-5.dll), copyright (c) the FFmpeg developers.
+    Licensed under the GNU LGPL v2.1 or later (built without GPL or
+    nonfree components). License text: LICENSE-LGPL-2.1.txt
+    Corresponding source: https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.xz
+    Build configuration: app/deps/ffmpeg.sh at the link above.
 
-  * SDL2
-    Licensed under the zlib license.
-    https://www.libsdl.org/
+  * dav1d 1.5.0, statically linked into avcodec-61.dll.
+    BSD 2-Clause license. License text: LICENSE-dav1d.txt
 
-  * libusb
-    Licensed under LGPL v2.1 or later.
-    https://libusb.info/
+  * libusb 1.0.29 (libusb-1.0.dll), copyright (c) the libusb authors.
+    Licensed under the GNU LGPL v2.1 or later.
+    License text: LICENSE-LGPL-2.1.txt
+    Corresponding source:
+    https://github.com/libusb/libusb/archive/refs/tags/v1.0.29.tar.gz
 
-For LGPL components, the corresponding source code is available from
-the upstream project pages linked above. Users may replace the bundled
-library files with their own compatible builds.
+  * SDL2 2.32.8 (SDL2.dll), copyright (c) Sam Lantinga.
+    zlib license. https://github.com/libsdl-org/SDL/tree/release-2.32.8
+
+The LGPL libraries are dynamically linked and unmodified. You may replace
+the bundled DLLs in the scrcpy/ folder with your own compatible builds.

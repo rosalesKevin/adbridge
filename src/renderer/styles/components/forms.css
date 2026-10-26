@@ -1,10 +1,4 @@
 /* Forms and controls */
-.auto-refresh-row {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
 .interval-select {
   background-color: var(--bg-input);
   color: var(--text-primary);
@@ -67,22 +61,6 @@
   cursor: pointer;
 }
 
-.file-pick-row {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.file-label {
-  flex: 1;
-  color: var(--text-secondary);
-  font-size: 11.5px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 0 2px;
-}
-
 .dest-input {
   flex: 1;
   background-color: var(--bg-input);
@@ -105,27 +83,83 @@
   border-color: var(--accent);
 }
 
-.btn-advanced-toggle {
-  background: none;
-  border: none;
-  padding: 2px 0;
-  font-size: 11px;
+/* Chosen APK chip (Apps header): click to change the file */
+.apk-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 240px;
+  padding: 4px 10px;
+  background-color: var(--bg-input);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
+  font-family: inherit;
+  font-size: 11.5px;
   cursor: pointer;
-  text-align: left;
-  transition: color 0.15s;
+  transition: border-color 0.15s, color 0.15s;
 }
 
-.btn-advanced-toggle:hover {
-  color: var(--text-secondary);
+.apk-picker:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.apk-picker.has-file {
+  border-style: solid;
+  color: var(--text-primary);
+}
+
+.apk-picker:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.apk-picker-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* APK tools menu (Apps header "⋯") */
+.menu-anchor {
+  position: relative;
 }
 
 .apk-advanced-panel {
   display: none;
   flex-direction: column;
-  gap: 4px;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  min-width: 200px;
+  padding: 4px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .apk-advanced-panel.open {
   display: flex;
+}
+
+.menu-item {
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12px;
+  text-align: left;
+  padding: 7px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.menu-item:hover {
+  background-color: var(--bg-hover);
 }

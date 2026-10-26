@@ -11,7 +11,6 @@ let trackerRestartTimer = null;
 let trackerBuffer = '';
 let trackerStopping = false;
 let trackerOnDevicesChanged = null;
-let trackerOnStatus = null;
 
 function parseDevicesOutput(stdout) {
   const lines = stdout.split('\n');
@@ -64,12 +63,6 @@ function consumeTrackerBuffer() {
   }
 }
 
-function reportTrackerStatus(message) {
-  if (typeof trackerOnStatus === 'function') {
-    trackerOnStatus(message);
-  }
-}
-
 function scheduleTrackerRestart() {
   if (trackerStopping || trackerRestartTimer !== null) return;
 
@@ -93,12 +86,9 @@ async function getDevices() {
   return parseDevicesOutput(stdout);
 }
 
-function startDeviceTracking({ onDevicesChanged, onStatus } = {}) {
+function startDeviceTracking({ onDevicesChanged } = {}) {
   if (typeof onDevicesChanged === 'function') {
     trackerOnDevicesChanged = onDevicesChanged;
-  }
-  if (typeof onStatus === 'function') {
-    trackerOnStatus = onStatus;
   }
 
   if (trackerProcess) return;
@@ -108,40 +98,27 @@ function startDeviceTracking({ onDevicesChanged, onStatus } = {}) {
 
   try {
     trackerProcess = spawn(getAdbExe(), ['track-devices'], {
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ['ignore', 'pipe', 'ignore'],
       windowsHide: true
     });
-  } catch (err) {
-    reportTrackerStatus(`error: ${err.message}`);
+  } catch {
     scheduleTrackerRestart();
     return;
   }
 
-  reportTrackerStatus('started');
-
   trackerProcess.stdout.setEncoding('utf8');
-  trackerProcess.stderr.setEncoding('utf8');
 
   trackerProcess.stdout.on('data', (chunk) => {
     trackerBuffer += chunk;
     consumeTrackerBuffer();
   });
 
-  trackerProcess.stderr.on('data', (chunk) => {
-    const message = String(chunk).trim();
-    if (message) {
-      reportTrackerStatus(`stderr: ${message}`);
-    }
-  });
+  // Without a listener a spawn error would crash the main process; 'exit' handles the restart.
+  trackerProcess.on('error', () => {});
 
-  trackerProcess.on('error', (err) => {
-    reportTrackerStatus(`error: ${err.message}`);
-  });
-
-  trackerProcess.on('exit', (code, signal) => {
+  trackerProcess.on('exit', () => {
     trackerProcess = null;
     trackerBuffer = '';
-    reportTrackerStatus(`exit: code=${code ?? 'null'} signal=${signal ?? 'null'}`);
     if (!trackerStopping) {
       scheduleTrackerRestart();
     }
@@ -220,20 +197,39 @@ async function disconnectWireless(deviceId) {
   return stdout.trim();
 }
 
+/**
+ * Human-friendly device name: the name set in Android settings (About phone → Device name),
+ * else the marketing name, else the model. Null if none is available.
+ */
+/** Runs a device shell command; resolves to trimmed stdout, or '' on any failure. */
+function shellOut(deviceId, args, timeoutMs) {
+  return runAdb(['-s', deviceId, 'shell', ...args], timeoutMs)
+    .then((r) => r.stdout.trim())
+    .catch(() => '');
+}
+
+async function getDeviceName(deviceId) {
+  validateDeviceId(deviceId);
+
+  const shell = (...args) => shellOut(deviceId, args, 5000);
+
+  const deviceName = await shell('settings', 'get', 'global', 'device_name');
+  if (deviceName && deviceName !== 'null') return deviceName;
+
+  return (await shell('getprop', 'ro.product.marketname')) || (await shell('getprop', 'ro.product.model')) || null;
+}
+
 async function getDeviceInfo(deviceId) {
   validateDeviceId(deviceId);
 
-  const prop = (key) =>
-    runAdb(['-s', deviceId, 'shell', 'getprop', key], 10000)
-      .then((r) => r.stdout.trim())
-      .catch(() => '');
+  const shell = (...args) => shellOut(deviceId, args, 10000);
 
   const [model, manufacturer, androidVersion, batteryOut, memOut] = await Promise.all([
-    prop('ro.product.model'),
-    prop('ro.product.manufacturer'),
-    prop('ro.build.version.release'),
-    runAdb(['-s', deviceId, 'shell', 'dumpsys', 'battery'], 10000).then((r) => r.stdout).catch(() => ''),
-    runAdb(['-s', deviceId, 'shell', 'cat', '/proc/meminfo'], 10000).then((r) => r.stdout).catch(() => ''),
+    shell('getprop', 'ro.product.model'),
+    shell('getprop', 'ro.product.manufacturer'),
+    shell('getprop', 'ro.build.version.release'),
+    shell('dumpsys', 'battery'),
+    shell('cat', '/proc/meminfo'),
   ]);
 
   const levelMatch = batteryOut.match(/level:\s*(\d+)/);
@@ -295,6 +291,7 @@ module.exports = {
   startDeviceTracking,
   stopDeviceTracking,
   getDeviceInfo,
+  getDeviceName,
   getDeviceIp,
   setupWireless,
   disconnectWireless,

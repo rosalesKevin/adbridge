@@ -18,38 +18,26 @@ function cancelActiveTransfer() {
 function runAdb(args, timeoutMs = 30000) {
   return new Promise((resolve, reject) => {
     execFile(getAdbExe(), args, { timeout: timeoutMs, maxBuffer: 1024 * 1024 * 5 }, (error, stdout, stderr) => {
-      if (error) {
-        if (error.killed) {
-          reject(new Error(`Command timed out after ${timeoutMs / 1000}s: adb ${args.join(' ')}`));
-          return;
-        }
-        if (stdout || stderr) {
-          resolve({ stdout: stdout.trim(), stderr: stderr.trim() });
-          return;
-        }
-        reject(new Error(stderr || error.message));
+      if (error?.killed) {
+        reject(new Error(`Command timed out after ${timeoutMs / 1000}s: adb ${args.join(' ')}`));
         return;
       }
-
+      // A non-zero exit that still printed something is treated as a result; callers inspect the output.
+      if (error && !stdout && !stderr) {
+        reject(new Error(error.message));
+        return;
+      }
       resolve({ stdout: stdout.trim(), stderr: stderr.trim() });
     });
   });
 }
 
 /**
- * Spawns an ADB process for streaming output.
- */
-function spawnAdb(args) {
-  return spawn(getAdbExe(), args);
-}
-
-/**
  * Spawns an ADB process with a promise-based completion and an inactivity timeout.
  * The timeout resets whenever the process produces output on stdout or stderr.
- * This is ideal for long transfers that might take minutes/hours but should
- * never be idle for too long.
+ * Pass 0 to disable the timeout entirely (used for file transfers).
  */
-function spawnAdbWithInactivityTimeout(args, inactivityTimeoutMs = 30000, onData, activityRef = null) {
+function spawnAdbWithInactivityTimeout(args, inactivityTimeoutMs) {
   return new Promise((resolve, reject) => {
     const child = spawn(getAdbExe(), args);
     activeTransferProcess = child;
@@ -69,22 +57,16 @@ function spawnAdbWithInactivityTimeout(args, inactivityTimeoutMs = 30000, onData
       }
     };
 
-    if (activityRef) activityRef.reset = resetTimeout;
-
     resetTimeout();
 
     child.stdout.on('data', (data) => {
       resetTimeout();
-      const str = data.toString();
-      output += str;
-      if (onData) onData(str, false);
+      output += data;
     });
 
     child.stderr.on('data', (data) => {
       resetTimeout();
-      const str = data.toString();
-      errorOutput += str;
-      if (onData) onData(str, true);
+      errorOutput += data;
     });
 
     child.on('close', (code) => {
@@ -107,10 +89,11 @@ function spawnAdbWithInactivityTimeout(args, inactivityTimeoutMs = 30000, onData
     });
 
     child.on('error', (err) => {
+      activeTransferProcess = null;
       if (timeoutTimer) clearTimeout(timeoutTimer);
       reject(err);
     });
   });
 }
 
-module.exports = { runAdb, spawnAdb, spawnAdbWithInactivityTimeout, cancelActiveTransfer };
+module.exports = { runAdb, spawnAdbWithInactivityTimeout, cancelActiveTransfer };

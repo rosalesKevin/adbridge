@@ -3,7 +3,7 @@
 const { spawn } = require('node:child_process');
 const path = require('node:path');
 const fs = require('node:fs');
-const { validateDeviceId } = require('./adb-service');
+const { validateDeviceId } = require('./adb/validation');
 const { resolveToolPath, buildMissingToolMessage } = require('./runtime-paths');
 
 // ── Process Registry ──
@@ -32,6 +32,35 @@ function getScrcpyExecutableForTest({
   };
 }
 
+const MIRROR_FLAGS = {
+  stayAwake: '--stay-awake',
+  turnScreenOff: '--turn-screen-off',
+  showTouches: '--show-touches',
+  alwaysOnTop: '--always-on-top'
+};
+const MIRROR_MAX_SIZES = [800, 1024, 1280, 1920];
+const MIRROR_BIT_RATES_MBPS = [2, 4, 8, 16];
+
+/**
+ * Builds scrcpy arguments. Options come from the renderer, so only known
+ * boolean flags and preset numeric values are accepted; anything else is dropped.
+ */
+function buildMirrorArgs(deviceId, options) {
+  const opts = options || {};
+  // Arguments as array — same security principle as execFile in adb/runner.js.
+  // --serial: target specific device (like adb -s <id>)
+  // --no-audio: prevents errors on devices without audio forwarding support
+  const args = ['--serial', deviceId, '--no-audio'];
+
+  for (const [key, flag] of Object.entries(MIRROR_FLAGS)) {
+    if (opts[key] === true) args.push(flag);
+  }
+  if (MIRROR_MAX_SIZES.includes(opts.maxSize)) args.push(`--max-size=${opts.maxSize}`);
+  if (MIRROR_BIT_RATES_MBPS.includes(opts.bitRate)) args.push(`--video-bit-rate=${opts.bitRate}M`);
+
+  return args;
+}
+
 /**
  * Start mirroring a device. Spawns scrcpy as a long-lived child process.
  *
@@ -39,10 +68,11 @@ function getScrcpyExecutableForTest({
  * @param {(eventType: 'exit'|'error', detail: string) => void} onEvent
  *   Callback fired when the process exits or errors. The IPC layer uses this
  *   to push status updates to the renderer.
+ * @param {object} [options] - mirror settings, see buildMirrorArgs
  * @returns {{ success: boolean, error?: string }}
  */
-function startMirror(deviceId, onEvent) {
-  validateDeviceId(deviceId); // throws if invalid — same pattern as adb-service
+function startMirror(deviceId, onEvent, options) {
+  validateDeviceId(deviceId);
 
   if (runningProcesses.has(deviceId)) {
     return { success: false, error: 'Mirror already running for this device' };
@@ -60,10 +90,7 @@ function startMirror(deviceId, onEvent) {
     };
   }
 
-  // Arguments as array — same security principle as execFile in adb-service.js.
-  // --serial: target specific device (like adb -s <id>)
-  // --no-audio: prevents errors on devices without audio forwarding support
-  const args = ['--serial', deviceId, '--no-audio'];
+  const args = buildMirrorArgs(deviceId, options);
   const scrcpyDir = path.dirname(scrcpyExe);
 
   const proc = spawn(scrcpyExe, args, {
@@ -128,6 +155,7 @@ function stopAllMirrors() {
 
 module.exports = {
   getScrcpyExecutableForTest,
+  buildMirrorArgs,
   startMirror,
   stopMirror,
   isMirrorRunning,

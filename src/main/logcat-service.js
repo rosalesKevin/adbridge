@@ -29,6 +29,7 @@ const runningProcesses = new Map();
  * @param {string} tags - comma-separated tag names; empty string to skip
  * @param {string} level - V, D, I, W, E, F, or "" (all); defaults to all
  * @param {(line: string) => void} onLine - called for each stdout line
+ * @param {(line: string) => void} onError - called for each stderr line
  * @returns {Promise<{ success: boolean, error?: string }>}
  */
 async function startLogcat(deviceId, packageName, tags, level, onLine, onError) {
@@ -94,20 +95,16 @@ async function startLogcat(deviceId, packageName, tags, level, onLine, onError) 
     const trimmed = line.trim();
     if (!trimmed) return;
     onLine(`E/logcat-error: ${trimmed}`);
-    if (onError) onError(trimmed);
+    onError(trimmed);
   });
 
-  proc.on('exit', () => {
+  const cleanup = () => {
     runningProcesses.delete(deviceId);
     rl.close();
     rlErr.close();
-  });
-
-  proc.on('error', () => {
-    runningProcesses.delete(deviceId);
-    rl.close();
-    rlErr.close();
-  });
+  };
+  proc.on('exit', cleanup);
+  proc.on('error', cleanup);
 
   return { success: true };
 }
@@ -131,15 +128,6 @@ function stopLogcat(deviceId) {
 }
 
 /**
- * Check if logcat is running for a device.
- * @param {string} deviceId
- * @returns {boolean}
- */
-function isLogcatRunning(deviceId) {
-  return runningProcesses.has(deviceId);
-}
-
-/**
  * Kill all running logcat processes. Called on app quit.
  */
 function stopAllLogcat() {
@@ -149,4 +137,4 @@ function stopAllLogcat() {
   runningProcesses.clear();
 }
 
-module.exports = { startLogcat, stopLogcat, isLogcatRunning, stopAllLogcat };
+module.exports = { startLogcat, stopLogcat, stopAllLogcat };

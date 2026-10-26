@@ -7,171 +7,200 @@
           content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';">
     <title>ADBridge</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="theme-init.js"></script>
 </head>
 <body>
 
-    <header class="header-bar">
-        <h1 class="app-title">ADBridge <span id="appVersion" class="app-version" aria-label="Application version"></span></h1>
-        <div class="header-center">
-            <button id="refreshDevicesBtn" class="btn btn-icon btn-small" title="Refresh devices">↻</button>
-            <select id="deviceSelect" class="device-select">
-                <option value="">No devices</option>
-            </select>
-            <button id="wirelessBtn" class="btn btn-small btn-secondary" disabled title="Set up wireless ADB">⊛ Wireless</button>
-            <button id="mirrorBtn" class="btn btn-small btn-secondary" disabled>Mirror</button>
-        </div>
-        <div class="header-right">
-            <span id="statusDot" class="status-dot offline"></span>
-            <span id="statusLabel" class="status-text">Checking ADB...</span>
-        </div>
-    </header>
+    <div class="app-shell">
 
-    <div id="updateBanner" class="update-banner hidden">
-        <div id="updateBannerAvailable" class="update-banner-state">
-            <span id="updateBannerMsg" class="update-banner-msg"></span>
-            <button id="updateOpenPageBtn" class="btn btn-small btn-primary">Open Download Page</button>
-            <button id="updateLaterBtn" class="btn btn-small btn-ghost">Later</button>
-        </div>
-        <button id="updateDismissBtn" class="btn btn-small btn-ghost">Dismiss</button>
-    </div>
+        <!-- ══ SIDEBAR: device card + navigation ══ -->
+        <aside class="sidebar">
+            <h1 class="app-title">ADBridge <span id="appVersion" class="app-version" aria-label="Application version"></span></h1>
 
-    <div id="deviceInfoBar" class="device-info-bar hidden"></div>
-
-    <main class="main-content">
-
-        <!-- FULL-WIDTH PANEL: Tabbed -->
-        <section class="panel app-panel">
-
-            <!-- Tab navigation -->
-            <div class="tab-bar">
-                <button id="tabBtnApps" class="tab-btn active">Applications</button>
-                <button id="tabBtnExplorer" class="tab-btn">Device Explorer</button>
-                <button id="tabBtnLogcat" class="tab-btn">Logcat</button>
+            <div class="device-card">
+                <div class="device-card-head">
+                    <select id="deviceSelect" class="device-select" title="Switch device" aria-label="Device">
+                        <option value="">No devices</option>
+                    </select>
+                    <button id="refreshDevicesBtn" class="btn btn-icon btn-small" title="Refresh devices" aria-label="Refresh devices">↻</button>
+                </div>
+                <div id="deviceInfoBar" class="device-info-bar hidden"></div>
+                <p class="device-empty-hint">Connect a phone with USB debugging on.</p>
+                <div class="device-card-actions">
+                    <button id="mirrorBtn" class="btn btn-small btn-secondary" disabled>Mirror</button>
+                    <button id="wirelessBtn" class="btn btn-small btn-secondary" disabled title="Set up wireless ADB">⊛ Wireless</button>
+                </div>
             </div>
 
-            <!-- ══ APPLICATIONS TAB ══ -->
-            <div id="tabApps" class="tab-pane active">
+            <nav class="sidebar-nav" aria-label="Sections">
+                <button id="tabBtnApps" class="tab-btn active"><span class="nav-icon" aria-hidden="true">▦</span>Apps</button>
+                <button id="tabBtnExplorer" class="tab-btn"><span class="nav-icon" aria-hidden="true">▤</span>Files</button>
+                <button id="tabBtnLogcat" class="tab-btn"><span class="nav-icon" aria-hidden="true">≡</span>Logcat</button>
+            </nav>
 
-                <div class="app-header-row">
-                    <h2 class="section-header">Applications</h2>
-                    <span id="appCount" class="app-count">0 / 0 apps</span>
+            <button id="settingsBtn" class="tab-btn sidebar-settings" title="Settings"><span class="nav-icon" aria-hidden="true">⚙</span>Settings</button>
+        </aside>
+
+        <div id="sidebarResizeHandle" class="sidebar-resize-handle" title="Drag to resize"></div>
+
+        <div class="workspace">
+
+            <div id="updateBanner" class="update-banner hidden">
+                <div class="update-banner-state">
+                    <span id="updateBannerMsg" class="update-banner-msg"></span>
+                    <button id="updateOpenPageBtn" class="btn btn-small btn-primary">Open Download Page</button>
+                    <button id="updateLaterBtn" class="btn btn-small btn-ghost">Later</button>
                 </div>
-
-                <div class="search-row">
-                    <input id="searchField" type="text" class="search-field"
-                           placeholder="🔍  Filter packages..." autocomplete="off">
-                    <label class="checkbox-custom">
-                        <input id="showSystemApps" type="checkbox">
-                        <span>Include system apps</span>
-                    </label>
-                </div>
-
-                <ul id="appList" class="item-list app-list">
-                    <li class="empty-state">Select a device to view apps</li>
-                </ul>
-
-                <div class="section-divider"></div>
-
-                <div class="bottom-actions">
-                    <div class="install-section">
-                        <div class="file-pick-row">
-                            <button id="browseBtn" class="btn btn-secondary btn-icon btn-small" title="Browse for APK file">📂</button>
-                            <span id="apkPathLabel" class="file-label">No file selected</span>
-                        </div>
-                        <button id="installBtn" class="btn btn-success btn-small btn-full" disabled>▶  Install APK</button>
-                        <button id="apkAdvancedToggle" class="btn-advanced-toggle">▸ Advanced</button>
-                        <div id="apkAdvancedPanel" class="apk-advanced-panel">
-                            <button id="apkSigningInfoBtn" class="btn btn-secondary btn-small btn-full" disabled title="Show signing certificate info for the selected APK">🔏  APK Signing Info</button>
-                            <button id="inspectKeystoreBtn" class="btn btn-secondary btn-small btn-full" title="Inspect a keystore file">🔑  Inspect Keystore</button>
-                        </div>
-                    </div>
-                    <div class="actions-separator"></div>
-                    <div class="app-actions-section">
-                        <div class="selected-app-row">
-                            <span id="selectedAppName" class="selected-app-label">No app selected</span>
-                            <button id="deselectAppBtn" class="btn-deselect hidden" title="Deselect app">×</button>
-                        </div>
-                        <div class="app-action-row">
-                            <button id="clearDataBtn" class="btn btn-warning btn-small" disabled>⌫  Clear Data</button>
-                            <button id="uninstallBtn" class="btn btn-danger btn-small" disabled>✕  Uninstall</button>
-                        </div>
-                    </div>
-                </div>
-
+                <button id="updateDismissBtn" class="btn btn-small btn-ghost">Dismiss</button>
             </div>
 
-            <!-- ══ DEVICE EXPLORER TAB ══ -->
-            <div id="tabExplorer" class="tab-pane">
+            <main class="main-content">
 
-                <!-- Toolbar: breadcrumb + navigation + actions -->
-                <div class="explorer-toolbar">
-                    <div id="explorerBreadcrumb" class="explorer-breadcrumb">
-                        <!-- Populated by renderer.js -->
+                <!-- ══ APPS ══ -->
+                <section id="tabApps" class="tab-pane active">
+
+                    <div class="pane-header">
+                        <h2 class="pane-title">Apps</h2>
+                        <span id="appCount" class="app-count">0 / 0 apps</span>
+                        <button id="appsRefreshBtn" class="btn btn-icon btn-small" title="Refresh (F5)" aria-label="Refresh apps">↻</button>
+                        <span id="liveIndicator" class="live-indicator">Live</span>
+                        <span class="pane-header-spacer"></span>
+                        <button id="browseBtn" class="apk-picker" title="Choose an APK to install">
+                            <span aria-hidden="true">📂</span><span id="apkPathLabel" class="apk-picker-label">Choose APK…</span>
+                        </button>
+                        <button id="installBtn" class="btn btn-primary btn-small" title="Install the chosen APK on the selected device">⤒  Install</button>
+                        <div class="menu-anchor">
+                            <button id="apkAdvancedToggle" class="btn btn-secondary btn-small" aria-haspopup="true" aria-expanded="false" title="APK tools">⋯</button>
+                            <div id="apkAdvancedPanel" class="apk-advanced-panel" role="menu">
+                                <button id="apkSigningInfoBtn" class="menu-item" role="menuitem" title="Signing certificate of the chosen APK">🔏  APK signing info</button>
+                                <button id="inspectKeystoreBtn" class="menu-item" role="menuitem">🔑  Inspect keystore…</button>
+                            </div>
+                        </div>
                     </div>
-                    
+
+                    <div class="search-row">
+                        <input id="searchField" type="text" class="search-field"
+                               placeholder="🔍  Filter packages..." autocomplete="off">
+                        <label class="checkbox-custom">
+                            <input id="showSystemApps" type="checkbox">
+                            <span>Include system apps</span>
+                        </label>
+                    </div>
+
+                    <ul id="appList" class="item-list app-list">
+                        <li class="empty-state">Select a device to view apps</li>
+                    </ul>
+
+                    <!-- Moved into the selected row by apps.js -->
+                    <div id="appRowActions" class="app-row-actions">
+                        <button id="grantPermsBtn" class="row-action" title="Grant every runtime permission this app requests">✓<span class="row-action-label">Grant permissions</span></button>
+                        <label class="row-action row-action-toggle" title="Grant all permissions automatically whenever this app is installed or updated, from ADBridge, Android Studio or anywhere else">
+                            <input id="autoGrantChk" type="checkbox"><span>Auto-grant</span>
+                        </label>
+                        <button id="clearDataBtn" class="row-action row-action-warning" title="Clear app data">⌫<span class="row-action-label">Clear data</span></button>
+                        <button id="uninstallBtn" class="row-action row-action-danger" title="Uninstall app">✕<span class="row-action-label">Uninstall</span></button>
+                    </div>
+
+                </section>
+
+                <!-- ══ FILES ══ -->
+                <section id="tabExplorer" class="tab-pane">
+
+                    <div class="pane-header">
+                        <h2 class="pane-title">Files</h2>
+                        <input id="explorerFilter" type="search" class="search-field explorer-filter" placeholder="Filter this folder"
+                               autocomplete="off" spellcheck="false" aria-label="Filter this folder">
+                        <label class="checkbox-custom" title="Show files and folders whose names start with a dot">
+                            <input id="explorerShowHidden" type="checkbox"><span>Hidden</span>
+                        </label>
+                        <div class="explorer-header-actions">
+                            <button id="explorerPasteBtn" class="btn btn-primary btn-small hidden" title="Paste into this folder">📋 Paste</button>
+                            <button id="explorerNewFolderBtn" class="btn btn-secondary btn-small" title="Create new folder"><span>+ New Folder</span></button>
+                            <button id="explorerPushBtn" class="btn btn-secondary btn-small" title="Push a file to this folder"><span>↑ Push File</span></button>
+                            <button id="explorerPushFolderBtn" class="btn btn-secondary btn-small" title="Push a folder to this folder"><span>📁 Push Folder</span></button>
+                        </div>
+                    </div>
+
                     <div class="explorer-nav-row">
                         <button id="explorerUpBtn" class="btn btn-secondary btn-icon btn-small" title="Go up one level">↑</button>
                         <div class="explorer-path-container">
-                            <input id="explorerPathInput" type="text" class="dest-input explorer-path-input"
-                                   placeholder="/sdcard/" value="/sdcard/" spellcheck="false">
+                            <div id="explorerBreadcrumb" class="explorer-breadcrumb"></div>
+                            <input id="explorerPathInput" type="text" class="dest-input explorer-path-input hidden"
+                                   placeholder="/sdcard/" value="/sdcard/" spellcheck="false" aria-label="Path">
+                            <button id="explorerEditPathBtn" class="explorer-edit-path" title="Type a path" aria-label="Type a path">✎</button>
                         </div>
-                        <button id="explorerRefreshBtn" class="btn btn-secondary btn-icon btn-small" title="Refresh">↻</button>
+                        <div class="menu-anchor">
+                            <button id="explorerPlacesBtn" class="btn btn-secondary btn-icon btn-small" title="Quick locations" aria-label="Quick locations" aria-haspopup="true" aria-expanded="false">★</button>
+                            <div id="explorerPlacesMenu" class="apk-advanced-panel" role="menu">
+                                <button class="menu-item" role="menuitem" data-path="/sdcard/">📱  Internal storage</button>
+                                <button class="menu-item" role="menuitem" data-path="/sdcard/Download/">⬇  Download</button>
+                                <button class="menu-item" role="menuitem" data-path="/sdcard/DCIM/">📷  DCIM (camera)</button>
+                                <button class="menu-item" role="menuitem" data-path="/sdcard/Pictures/">🖼  Pictures</button>
+                                <button class="menu-item" role="menuitem" data-path="/sdcard/Documents/">📄  Documents</button>
+                                <button class="menu-item" role="menuitem" data-path="/sdcard/Movies/">🎬  Movies</button>
+                                <button class="menu-item" role="menuitem" data-path="/sdcard/Music/">🎵  Music</button>
+                                <button class="menu-item" role="menuitem" data-path="/data/local/tmp/">🧪  /data/local/tmp</button>
+                            </div>
+                        </div>
+                        <button id="explorerRefreshBtn" class="btn btn-secondary btn-icon btn-small" title="Refresh (F5)">↻</button>
                     </div>
 
-                    <div class="explorer-action-row">
-                        <div class="action-group">
-                            <button id="explorerNewFolderBtn" class="btn btn-secondary btn-small" title="Create new folder">
-                                <span>+ New Folder</span>
-                            </button>
-                            <button id="explorerPushBtn" class="btn btn-secondary btn-small" title="Upload file">
-                                <span>↑ Push File</span>
-                            </button>
-                            <button id="explorerPushFolderBtn" class="btn btn-secondary btn-small" title="Upload folder">
-                                <span>📁 Push Folder</span>
-                            </button>
-                        </div>
-                        <div class="action-group-separator"></div>
-                        <div class="action-group">
-                            <button id="explorerPullBtn" class="btn btn-primary btn-small" disabled title="Download selected">
-                                <span>↓ Pull</span>
-                            </button>
-                            <button id="explorerRenameBtn" class="btn btn-secondary btn-small" disabled title="Rename selected">
-                                <span>✎ Rename</span>
-                            </button>
-                            <button id="explorerDeleteBtn" class="btn btn-danger btn-small" disabled title="Delete selected">
-                                <span>✕ Delete</span>
-                            </button>
+                    <div id="explorerSelectionBar" class="selection-bar is-empty">
+                        <span id="explorerSelectionCount" class="selection-count"></span>
+                        <button id="explorerPullBtn" class="btn btn-primary btn-small" disabled title="Download selected"><span>↓ Pull</span></button>
+                        <button id="explorerCopyBtn" class="btn btn-secondary btn-small" disabled title="Copy, then Paste in another folder"><span>⧉ Copy</span></button>
+                        <button id="explorerCutBtn" class="btn btn-secondary btn-small" disabled title="Cut, then Paste in another folder to move"><span>✂ Cut</span></button>
+                        <button id="explorerRenameBtn" class="btn btn-secondary btn-small" disabled title="Rename selected"><span>✎ Rename</span></button>
+                        <button id="explorerDeleteBtn" class="btn btn-danger btn-small" disabled title="Delete selected"><span>✕ Delete</span></button>
+                    </div>
+
+                    <div id="explorerColumns" class="explorer-columns">
+                        <button class="explorer-col explorer-col-name" data-sort="name">Name</button>
+                        <button class="explorer-col explorer-col-size" data-sort="size">Size</button>
+                        <button class="explorer-col explorer-col-modified" data-sort="modified">Modified</button>
+                    </div>
+
+                    <ul id="explorerList" class="item-list">
+                        <li class="empty-state">Select a device to browse files</li>
+                    </ul>
+
+                    <div id="explorerContextMenu" class="apk-advanced-panel context-menu" role="menu">
+                        <button class="menu-item" role="menuitem" data-action="open">↗  Open on PC</button>
+                        <button class="menu-item" role="menuitem" data-action="pull">↓  Pull</button>
+                        <button class="menu-item" role="menuitem" data-action="copy">⧉  Copy</button>
+                        <button class="menu-item" role="menuitem" data-action="cut">✂  Cut</button>
+                        <button class="menu-item" role="menuitem" data-action="paste">📋  Paste here</button>
+                        <button class="menu-item" role="menuitem" data-action="rename">✎  Rename</button>
+                        <button class="menu-item" role="menuitem" data-action="copyPath">🔗  Copy path</button>
+                        <button class="menu-item" role="menuitem" data-action="properties">ℹ  Properties</button>
+                        <button class="menu-item" role="menuitem" data-action="newFolder">+  New folder</button>
+                        <button class="menu-item menu-item-danger" role="menuitem" data-action="delete">✕  Delete</button>
+                    </div>
+
+                    <div class="explorer-status-bar">
+                        <span id="explorerStatus" class="explorer-status">—</span>
+                        <button id="explorerCancelBtn" class="btn btn-danger btn-small explorer-cancel-btn hidden">✕ Cancel</button>
+                        <div id="explorerProgressBar" class="explorer-progress-bar hidden">
+                            <div id="explorerProgressFill" class="explorer-progress-fill"></div>
                         </div>
                     </div>
-                </div>
 
-                <!-- File / folder list -->
-                <ul id="explorerList" class="item-list explorer-list">
-                    <li class="empty-state">Select a device to browse files</li>
-                </ul>
+                </section>
 
-                <!-- Status bar -->
-                <div class="explorer-status-bar">
-                    <span id="explorerStatus" class="explorer-status">—</span>
-                    <button id="explorerCancelBtn" class="btn btn-danger btn-small explorer-cancel-btn hidden">✕ Cancel</button>
-                    <div id="explorerProgressBar" class="explorer-progress-bar hidden">
-                        <div id="explorerProgressFill" class="explorer-progress-fill"></div>
+                <!-- ══ LOGCAT ══ -->
+                <section id="tabLogcat" class="tab-pane">
+
+                    <div class="pane-header">
+                        <h2 class="pane-title">Logcat</h2>
                     </div>
-                </div>
 
-            </div>
-
-            <!-- ══ LOGCAT TAB ══ -->
-            <div id="tabLogcat" class="tab-pane">
-
-                <div class="logcat-toolbar">
-                    <div class="logcat-toolbar-row">
-                        <select id="logcatAppSelect" class="logcat-app-select">
+                    <div class="logcat-toolbar">
+                        <select id="logcatAppSelect" class="logcat-app-select" aria-label="App">
                             <option value="">Select app...</option>
                         </select>
                         <button id="logcatFromApkBtn" class="btn btn-secondary btn-small" title="Pick a release APK and auto-fill the app dropdown">📦 From APK</button>
-                        <select id="logcatLevelSelect" class="logcat-level-select" title="Minimum log level">
-                            <option value="" selected>All</option>
+                        <select id="logcatLevelSelect" class="logcat-level-select" title="Minimum log level" aria-label="Minimum log level">
+                            <option value="" selected>All levels</option>
                             <option value="V">Verbose</option>
                             <option value="D">Debug</option>
                             <option value="I">Info</option>
@@ -179,36 +208,40 @@
                             <option value="E">Error</option>
                             <option value="F">Fatal</option>
                         </select>
-                        <button id="logcatStartBtn" class="btn btn-success btn-small">▶  Start</button>
-                        <button id="logcatClearBtn" class="btn btn-secondary btn-small">⌫  Clear</button>
-                        <button id="logcatExportBtn" class="btn btn-secondary btn-small">↓  Export</button>
-                    </div>
-                    <div class="logcat-toolbar-row">
                         <input id="logcatTagInput" type="text" class="logcat-tag-input"
-                               placeholder="Tags (optional, comma-separated — e.g. ActivityMain, NetworkUtils)"
-                               autocomplete="off" spellcheck="false">
+                               placeholder="Tags, comma-separated (MainActivity, NetworkUtils)"
+                               autocomplete="off" spellcheck="false" aria-label="Tags">
+                        <button id="logcatStartBtn" class="btn btn-success btn-small">▶  Start</button>
+                        <button id="logcatClearBtn" class="btn btn-secondary btn-small" title="Clear output">⌫</button>
+                        <button id="logcatExportBtn" class="btn btn-secondary btn-small" title="Export to a file">↓ Export</button>
+                    </div>
+
+                    <div id="logcatOutput" class="logcat-area"></div>
+
+                </section>
+
+                <div id="mascotStage" class="mascot-stage" aria-hidden="true"></div>
+
+            </main>
+
+            <div id="logResizeHandle" class="log-resize-handle"></div>
+
+            <!-- ══ STATUS BAR + LOG DRAWER ══ -->
+            <footer id="logPanel" class="log-panel">
+                <div class="status-bar">
+                    <span id="statusDot" class="status-dot offline"></span>
+                    <span id="statusLabel" class="status-text">Checking ADB...</span>
+                    <span id="logLastLine" class="log-last-line"></span>
+                    <div class="log-header-actions">
+                        <button id="clearLogBtn" class="btn btn-small btn-muted">Clear</button>
+                        <button id="logToggleBtn" class="log-toggle" aria-expanded="true" title="Minimize log" aria-label="Minimize log">—</button>
                     </div>
                 </div>
+                <div id="logOutput" class="log-area"></div>
+            </footer>
 
-                <div id="logcatOutput" class="logcat-area"></div>
-
-            </div>
-
-        </section>
-
-    </main>
-
-    <div id="logResizeHandle" class="log-resize-handle"></div>
-
-    <footer class="log-panel">
-        <div class="log-header-row">
-            <h2 class="section-header">Log</h2>
-            <div class="log-header-actions">
-                <button id="clearLogBtn" class="btn btn-small btn-muted">Clear</button>
-            </div>
         </div>
-        <div id="logOutput" class="log-area"></div>
-    </footer>
+    </div>
 
     <div id="confirmOverlay" class="confirm-overlay" aria-hidden="true">
         <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
@@ -218,6 +251,91 @@
             <div class="confirm-actions">
                 <button id="confirmCancelBtn" class="btn btn-secondary btn-small">Cancel</button>
                 <button id="confirmOkBtn" class="btn btn-danger btn-small">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsOverlay" class="confirm-overlay" aria-hidden="true">
+        <div class="confirm-dialog settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+            <h3 id="settingsTitle" class="confirm-title">Settings</h3>
+
+            <h4 class="settings-heading">Appearance</h4>
+            <div class="settings-row">
+                <span>Theme</span>
+                <div class="theme-switch" role="group" aria-label="Theme">
+                    <button id="themeDarkBtn" class="btn btn-small theme-option">Dark</button>
+                    <button id="themeLightBtn" class="btn btn-small theme-option">Light</button>
+                </div>
+            </div>
+
+            <h4 class="settings-heading">App list</h4>
+            <label class="checkbox-custom">
+                <input id="liveAppListChk" type="checkbox">
+                <span>Refresh the app list automatically (every 5 s)</span>
+            </label>
+
+            <h4 class="settings-heading">Install</h4>
+            <label class="checkbox-custom">
+                <input id="grantOnInstallChk" type="checkbox">
+                <span>Grant all permissions on install</span>
+            </label>
+
+            <h4 class="settings-heading">Mirror</h4>
+            <label class="checkbox-custom">
+                <input id="mirrorStayAwakeChk" type="checkbox">
+                <span>Keep device awake</span>
+            </label>
+            <label class="checkbox-custom">
+                <input id="mirrorScreenOffChk" type="checkbox">
+                <span>Turn device screen off</span>
+            </label>
+            <label class="checkbox-custom">
+                <input id="mirrorShowTouchesChk" type="checkbox">
+                <span>Show touches</span>
+            </label>
+            <label class="checkbox-custom">
+                <input id="mirrorOnTopChk" type="checkbox">
+                <span>Window always on top</span>
+            </label>
+            <div class="settings-row">
+                <span>Max resolution</span>
+                <select id="mirrorMaxSizeSelect" class="interval-select settings-select">
+                    <option value="0">Original</option>
+                    <option value="1920">1920</option>
+                    <option value="1280">1280</option>
+                    <option value="1024">1024</option>
+                    <option value="800">800</option>
+                </select>
+            </div>
+            <div class="settings-row">
+                <span>Bitrate</span>
+                <select id="mirrorBitRateSelect" class="interval-select settings-select">
+                    <option value="0">Default</option>
+                    <option value="16">16 Mbps</option>
+                    <option value="8">8 Mbps</option>
+                    <option value="4">4 Mbps</option>
+                    <option value="2">2 Mbps</option>
+                </select>
+            </div>
+            <p class="settings-hint">Mirror changes apply the next time mirroring starts.</p>
+
+            <h4 class="settings-heading">Downloads</h4>
+            <div class="settings-row">
+                <span id="downloadFolderLabel" class="settings-folder-path">Ask every time</span>
+                <div class="theme-switch">
+                    <button id="downloadFolderChooseBtn" class="btn btn-small">Choose…</button>
+                    <button id="downloadFolderClearBtn" class="btn btn-small btn-muted">Clear</button>
+                </div>
+            </div>
+
+            <h4 class="settings-heading">Fun</h4>
+            <label class="checkbox-custom">
+                <input id="mascotChk" type="checkbox">
+                <span>Idle mascot (a droid drops by when ADBridge sits idle)</span>
+            </label>
+
+            <div class="confirm-actions">
+                <button id="settingsCloseBtn" class="btn btn-secondary btn-small">Close</button>
             </div>
         </div>
     </div>

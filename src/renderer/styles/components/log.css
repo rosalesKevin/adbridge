@@ -1,12 +1,12 @@
-/* Log */
-.log-area {
+/* App log and logcat output share one monospace panel style */
+.log-area,
+.logcat-area {
   user-select: text;
-  background-color: #090c12;
+  background-color: var(--log-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
   font-size: 11.5px;
-  color: #8899bb;
   padding: 8px 12px;
   flex: 1;
   min-height: 0;
@@ -14,4 +14,8 @@
   white-space: pre-wrap;
   word-break: break-all;
   line-height: 1.55;
+}
+
+.log-area {
+  color: var(--log-text);
 }

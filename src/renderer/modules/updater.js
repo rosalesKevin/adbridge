@@ -1,47 +1,20 @@
 import { dom } from './dom.js';
 
-// ── State ─────────────────────────────────────────────────────────────────────
+// Later / Dismiss hide the banner for the rest of the session.
+let dismissed = false;
 
-/** Session-level dismissed flag — set when user clicks Later or Dismiss. */
-let _dismissed = false;
-
-// ── Banner state helpers ──────────────────────────────────────────────────────
-
-function showState(activeId) {
-  const states = ['updateBannerAvailable'];
-  for (const id of states) {
-    dom[id].classList.toggle('hidden', id !== activeId);
-  }
-  dom.updateBanner.classList.remove('hidden');
-}
-
-function hideBanner() {
+function dismiss() {
+  dismissed = true;
   dom.updateBanner.classList.add('hidden');
 }
 
-// ── Event handlers ────────────────────────────────────────────────────────────
-
-function onUpdateAvailable({ version }) {
-  if (_dismissed) return;
-  dom.updateBannerMsg.textContent = `ADBridge v${version} is available`;
-  showState('updateBannerAvailable');
-}
-
-// ── Init ──────────────────────────────────────────────────────────────────────
-
 export function initUpdater() {
-  window.updater.onUpdateAvailable(onUpdateAvailable);
-  dom.updateOpenPageBtn.addEventListener('click', () => {
-    window.updater.openReleasePage();
+  window.updater.onUpdateAvailable(({ version }) => {
+    if (dismissed) return;
+    dom.updateBannerMsg.textContent = `ADBridge v${version} is available`;
+    dom.updateBanner.classList.remove('hidden');
   });
-
-  dom.updateLaterBtn.addEventListener('click', () => {
-    _dismissed = true;
-    hideBanner();
-  });
-
-  dom.updateDismissBtn.addEventListener('click', () => {
-    _dismissed = true;
-    hideBanner();
-  });
+  dom.updateOpenPageBtn.addEventListener('click', () => window.updater.openReleasePage());
+  dom.updateLaterBtn.addEventListener('click', dismiss);
+  dom.updateDismissBtn.addEventListener('click', dismiss);
 }

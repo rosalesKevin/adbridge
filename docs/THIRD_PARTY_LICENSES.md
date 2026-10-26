@@ -13,7 +13,11 @@ shipped inside the release zip at `LICENSES/` (source tree:
 - **Upstream source:** https://android.googlesource.com/platform/packages/modules/adb/
 - **Official binary distribution:** https://developer.android.com/tools/releases/platform-tools
 - **License text:** `LICENSES/LICENSE-platform-tools.txt`
-- **NOTICE:** `LICENSES/NOTICE-platform-tools.txt`
+- **Version:** 36.0.0 (adb 36.0.0-13206524)
+- **NOTICE:** `LICENSES/NOTICE-platform-tools.txt` — the official NOTICE file from
+  platform-tools 36.0.0, copied unmodified. It carries the attribution notices for
+  components built into adb (BoringSSL/OpenSSL, protobuf, zlib, lz4, brotli,
+  mDNSResponder, and others).
 
 ### Why bundling is permitted
 
@@ -42,19 +46,34 @@ copies of Google's official platform-tools release.
 
 ## scrcpy dependencies (shipped inside `scrcpy/`)
 
-| Component | License | Upstream |
-| --- | --- | --- |
-| FFmpeg (avcodec, avformat, avutil, swresample) | LGPL v2.1+ | https://ffmpeg.org/ |
-| SDL2 | zlib | https://www.libsdl.org/ |
-| libusb | LGPL v2.1+ | https://libusb.info/ |
+Versions and build scripts are pinned by scrcpy v3.3.4's
+[`app/deps`](https://github.com/Genymobile/scrcpy/tree/v3.3.4/app/deps)
+(no patches applied).
 
-LGPL components are dynamically linked. Source is available from the
-upstream project pages. Users may replace the bundled library files
-with compatible builds of their own.
+| Component | Version | License | License text | Corresponding source |
+| --- | --- | --- | --- | --- |
+| FFmpeg (avcodec, avformat, avutil, swresample) | 7.1.1 | LGPL v2.1+ (no GPL/nonfree parts) | `LICENSES/LICENSE-LGPL-2.1.txt` | https://ffmpeg.org/releases/ffmpeg-7.1.1.tar.xz |
+| dav1d (built into avcodec-61.dll) | 1.5.0 | BSD 2-Clause | `LICENSES/LICENSE-dav1d.txt` | https://code.videolan.org/videolan/dav1d/-/tree/1.5.0 |
+| libusb | 1.0.29 | LGPL v2.1+ | `LICENSES/LICENSE-LGPL-2.1.txt` | https://github.com/libusb/libusb/archive/refs/tags/v1.0.29.tar.gz |
+| SDL2 | 2.32.8 | zlib | — | https://github.com/libsdl-org/SDL/tree/release-2.32.8 |
+
+LGPL components are dynamically linked and unmodified. Users may replace
+the bundled DLLs with compatible builds of their own.
 
 ## Electron
 
 ADBridge is built on Electron (MIT license + embedded Chromium under
 BSD-style license + Node.js under MIT). Electron license notices are
-generated into the packaged app by `electron-builder` and ship inside
-`resources/` in the release zip.
+generated into the packaged app by `electron-builder` and ship beside
+`ADBridge.exe` in the release zip (`LICENSE.electron.txt`,
+`LICENSES.chromium.html`).
+
+## Trademarks and artwork
+
+Android is a trademark of Google LLC.
+
+The antennae in the ADBridge icon and logo are adapted from the Android robot.
+The Android robot is
+reproduced or modified from work created and shared by Google and used
+according to terms described in the
+[Creative Commons 3.0 Attribution License](https://creativecommons.org/licenses/by/3.0/).

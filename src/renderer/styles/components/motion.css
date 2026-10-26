@@ -1,0 +1,108 @@
+/* Motion: small, purposeful animations.
+   Everything is inside this media query, so Windows' "Show animations" off = no motion. */
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    interpolate-size: allow-keywords; /* lets the log drawer animate to/from height: auto */
+  }
+
+  /* Section switch: content settles in */
+  .tab-pane.active {
+    animation: pane-in 180ms ease-out;
+  }
+
+  /* Log drawer eases open/closed; follows the mouse instantly while drag-resizing */
+  .log-panel {
+    transition: height 180ms ease, padding-bottom 180ms ease;
+  }
+
+  body:has(.log-resize-handle.dragging) .log-panel {
+    transition: none;
+  }
+
+  .log-panel:not(.collapsed) .log-area {
+    animation: fade-in 200ms ease-out;
+  }
+
+  /* Menus and dialogs pop in */
+  .apk-advanced-panel.open {
+    animation: pop-in 120ms ease-out;
+    transform-origin: top right;
+  }
+
+  .confirm-overlay.open {
+    animation: fade-in 150ms ease-out;
+  }
+
+  .confirm-overlay.open .confirm-dialog {
+    animation: pop-in 170ms ease-out;
+  }
+
+  /* Live dot breathes while auto-refresh runs */
+  .live-indicator:not(.paused)::before {
+    animation: live-pulse 2.4s ease-in-out infinite;
+  }
+
+  /* Newly installed app: slides in, green highlight fades over its 6 s.
+     apps.js sets a negative animation-delay on re-render so it doesn't restart. */
+  .item-list li.just-added:not(.selected) {
+    animation: row-in 260ms ease-out, added-fade 6s ease-in forwards;
+  }
+
+  /* Transfer bar: moving stripes; finished transfers get a checkmark pop */
+  .explorer-progress-fill {
+    transition: width 0.3s ease;
+    background-image: linear-gradient(45deg,
+      rgba(255, 255, 255, 0.18) 25%, transparent 25%, transparent 50%,
+      rgba(255, 255, 255, 0.18) 50%, rgba(255, 255, 255, 0.18) 75%, transparent 75%);
+    background-size: 14px 14px;
+    animation: progress-stripes 0.7s linear infinite;
+  }
+
+  .transfer-done {
+    animation: pop-in 220ms ease-out;
+  }
+
+  /* Theme switch: settings.js clips the new theme in as a growing circle */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  @keyframes pane-in {
+    from { opacity: 0; transform: translateY(4px); }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+  }
+
+  @keyframes pop-in {
+    from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  }
+
+  @keyframes live-pulse {
+    50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-ok) 35%, transparent); }
+  }
+
+  @keyframes row-in {
+    from { opacity: 0; transform: translateX(-8px); }
+  }
+
+  @keyframes added-fade {
+    0%, 55% { background-color: rgba(34, 168, 85, 0.14); box-shadow: inset 3px 0 0 var(--success); }
+    100% { background-color: transparent; box-shadow: inset 3px 0 0 transparent; }
+  }
+
+  @keyframes progress-stripes {
+    to { background-position: 14px 0; }
+  }
+}
+
+/* Finished-transfer label (shown with or without motion) */
+.transfer-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--success-text);
+}

@@ -1,10 +1,15 @@
-const { app, BrowserWindow, globalShortcut } = require('electron');
+const { app, BrowserWindow } = require('electron');
 const path = require('node:path');
 const { registerIpcHandlers } = require('./ipc-handlers');
 const adbService = require('./adb-service');
 const scrcpyService = require('./scrcpy-service');
 const logcatService = require('./logcat-service');
-const { checkForUpdates } = require('./ipc/updater-routes');
+const { checkForUpdates } = require('./updater');
+const { enforceSingleInstance } = require('./single-instance');
+const { devShortcutAction } = require('./dev-shortcuts');
+
+// A second launch focuses the open window instead of starting another copy.
+const isPrimaryInstance = enforceSingleInstance(app, () => BrowserWindow.getAllWindows()[0]);
 
 // Set a stable AppUserModelId so Windows taskbar always shows the correct icon,
 // regardless of the temp directory the portable exe extracts into.
@@ -55,6 +60,17 @@ function createWindow() {
     // Remove the default menu bar
     win.setMenuBarVisibility(false);
 
+    // Dev-mode shortcuts (running from source): Ctrl+R reloads, F12 toggles DevTools.
+    if (!app.isPackaged) {
+        win.webContents.on('before-input-event', (event, input) => {
+            const action = devShortcutAction(input);
+            if (!action) return;
+            event.preventDefault();
+            if (action === 'reload') win.webContents.reload();
+            else win.webContents.toggleDevTools();
+        });
+    }
+
     // Load the renderer HTML
     win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
     win.webContents.once('did-finish-load', () => {
@@ -63,7 +79,7 @@ function createWindow() {
 }
 
 // App lifecycle
-app.whenReady().then(() => {
+if (isPrimaryInstance) app.whenReady().then(() => {
     registerIpcHandlers();
     createWindow();
     adbService.startDeviceTracking({
@@ -71,25 +87,6 @@ app.whenReady().then(() => {
             for (const win of BrowserWindow.getAllWindows()) {
                 win.webContents.send('adb:devices-changed', devices);
             }
-        }
-    });
-
-    // Dev-mode shortcuts — only active when running from source (not packaged)
-    if (!app.isPackaged) {
-        globalShortcut.register('F5', () => {
-            const win = BrowserWindow.getFocusedWindow();
-            if (win) win.webContents.reload();
-        });
-        globalShortcut.register('F12', () => {
-            const win = BrowserWindow.getFocusedWindow();
-            if (win) win.webContents.toggleDevTools();
-        });
-    }
-
-    app.on('activate', () => {
-        // macOS: re-create window when dock icon is clicked and no windows exist
-        if (BrowserWindow.getAllWindows().length === 0) {
-            createWindow();
         }
     });
 });
@@ -100,13 +97,4 @@ app.on('before-quit', () => {
     logcatService.stopAllLogcat();
 });
 
-app.on('will-quit', () => {
-    globalShortcut.unregisterAll();
-});
-
-// Quit when all windows are closed (except on macOS)
-app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
-});
+app.on('window-all-closed', () => app.quit());

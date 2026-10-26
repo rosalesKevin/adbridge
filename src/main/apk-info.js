@@ -7,10 +7,8 @@ const fs = require('node:fs');
 function runAapt(executable, args, timeoutMs) {
   return new Promise((resolve, reject) => {
     execFile(executable, args, { timeout: timeoutMs, maxBuffer: 1024 * 1024 * 4 }, (err, stdout, stderr) => {
-      if (err && err.code === 'ENOENT') {
-        const e = new Error(err.message);
-        e.code = 'ENOENT';
-        reject(e);
+      if (err?.code === 'ENOENT') {
+        reject(err);
         return;
       }
       if (err && !stdout) {
@@ -23,7 +21,9 @@ function runAapt(executable, args, timeoutMs) {
 }
 
 function findLatestBuildToolsBinDir() {
-  const sdkRoot = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
+  // Android Studio installs the SDK under %LOCALAPPDATA% without setting ANDROID_HOME.
+  const sdkRoot = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT
+    || (process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Android', 'Sdk'));
   if (!sdkRoot) return null;
 
   const buildToolsDir = path.join(sdkRoot, 'build-tools');
@@ -40,18 +40,11 @@ function findLatestBuildToolsBinDir() {
 }
 
 async function findAndRunAapt(args, timeoutMs = 15000) {
-  // 1. Try aapt from PATH
-  try { return await runAapt('aapt', args, timeoutMs); } catch (e) { if (e.code !== 'ENOENT') throw e; }
-
-  // 2. Try aapt2 from PATH
-  try { return await runAapt('aapt2', args, timeoutMs); } catch (e) { if (e.code !== 'ENOENT') throw e; }
-
-  // 3. Try from Android SDK build-tools directory
+  // aapt/aapt2 from PATH first, then from the newest Android SDK build-tools.
   const binDir = findLatestBuildToolsBinDir();
-  if (binDir) {
-    for (const name of ['aapt.exe', 'aapt2.exe', 'aapt', 'aapt2']) {
-      try { return await runAapt(path.join(binDir, name), args, timeoutMs); } catch (e) { if (e.code !== 'ENOENT') throw e; }
-    }
+  const sdkTools = binDir ? ['aapt.exe', 'aapt2.exe', 'aapt', 'aapt2'].map((name) => path.join(binDir, name)) : [];
+  for (const executable of ['aapt', 'aapt2', ...sdkTools]) {
+    try { return await runAapt(executable, args, timeoutMs); } catch (e) { if (e.code !== 'ENOENT') throw e; }
   }
 
   throw new Error(
@@ -73,4 +66,4 @@ async function getApkPackageName(apkPath) {
   return match[1];
 }
 
-module.exports = { getApkPackageName };
+module.exports = { getApkPackageName, findLatestBuildToolsBinDir };

@@ -2,16 +2,15 @@
   "name": "adbridge",
   "version": "1.2.4",
   "description": "Android device management via ADB",
+  "license": "MIT",
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node tests/updater.test.js && node tests/manual-updater.test.js && node tests/app-info.test.js && node tests/runner.test.js && node tests/device.test.js && node tests/files.test.js && node tests/packages.test.js && node tests/adb-routes.test.js && node tests/runtime-paths.test.js && node tests/explorer-action-state.test.mjs && node tests/explorer-rename.test.mjs && node tests/version-placement.test.js && node tests/explorer-go-removal.test.js && node tests/build-config.test.js",
-    "build": "npm run build:dir",
-    "build:dir": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win dir"
+    "test": "node tests/updater.test.js && node tests/manual-updater.test.js && node tests/app-info.test.js && node tests/runner.test.js && node tests/device.test.js && node tests/files.test.js && node tests/packages.test.js && node tests/keystore.test.js && node tests/adb-routes.test.js && node tests/dialog-routes.test.js && node tests/runtime-paths.test.js && node tests/single-instance.test.js && node tests/dev-shortcuts.test.js && node tests/open-on-pc.test.js && node tests/explorer-action-state.test.mjs && node tests/explorer-arrange.test.mjs && node tests/auto-grant-state.test.mjs && node tests/app-list-diff.test.mjs && node tests/device-label.test.mjs && node tests/mascot-state.test.mjs &&node tests/explorer-rename.test.mjs && node tests/version-placement.test.js && node tests/explorer-go-removal.test.js && node tests/build-config.test.js",
+    "build": "electron-builder --win dir"
   },
   "devDependencies": {
-    "cross-env": "^10.1.0",
-    "electron": "^28.3.0",
+    "electron": "^45.0.0",
     "electron-builder": "^24.13.0",
     "rcedit": "^5.0.2"
   },
@@ -21,9 +20,6 @@
     "electronLanguages": [
       "en-US"
     ],
-    "directories": {
-      "output": "dist"
-    },
     "win": {
       "icon": "assets/icon.ico",
       "target": [
@@ -38,8 +34,7 @@
     },
     "afterPack": "scripts/after-pack.js",
     "files": [
-      "src/**/*",
-      "assets/icon.ico"
+      "src/**/*"
     ],
     "extraFiles": [
       {
@@ -63,6 +58,10 @@
       {
         "from": "build/README.txt",
         "to": "README.txt"
+      },
+      {
+        "from": "LICENSE",
+        "to": "LICENSE.txt"
       }
     ],
     "extraResources": [
